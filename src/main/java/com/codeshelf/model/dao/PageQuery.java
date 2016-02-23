@@ -17,6 +17,7 @@ import org.hibernate.criterion.Order;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.sun.jersey.api.representation.Form;
 
@@ -69,22 +70,26 @@ public class PageQuery {
 		return criteria;
 	}
 	
-	public PageQuery getNextQuery() {
-		return new PageQuery(this, start + limit);
-	}
-
-	public String  getNextQueryToken() {
-		UriBuilder builder = UriBuilder.fromUri("/");
-        for (Map.Entry<String, List<String>> e : getNextQuery().sourceQueryParameters.entrySet()) {
-            for (String value : e.getValue())
-            	builder.queryParam(e.getKey(), value);
-        }
-		String queryString = builder.build(new Object[0]).getQuery();
-		try {
-			return URLEncoder.encode(builder.build(new Object[0]).getQuery(), "UTF-8");
-		} catch (UnsupportedEncodingException | IllegalArgumentException | UriBuilderException e1) {
-			LOGGER.error("Should have been able to encode query string {}", queryString, e1);
-			return queryString;
+	public Optional<String>  getNextQueryToken(long total) {
+		int newStart = start + limit;
+		if (newStart < total) {
+			PageQuery nextQuery = new PageQuery(this, newStart);
+			
+			UriBuilder builder = UriBuilder.fromUri("/");
+	        for (Map.Entry<String, List<String>> e : nextQuery.sourceQueryParameters.entrySet()) {
+	            for (String value : e.getValue())
+	            	builder.queryParam(e.getKey(), value);
+	        }
+			String queryString = builder.build(new Object[0]).getQuery();
+			try {
+				return Optional.of(URLEncoder.encode(builder.build(new Object[0]).getQuery(), "UTF-8"));
+			} catch (UnsupportedEncodingException | IllegalArgumentException | UriBuilderException e1) {
+				LOGGER.error("Should have been able to encode query string {}", queryString, e1);
+				return Optional.of(queryString);
+			}
+		}
+		else {
+			return Optional.absent();
 		}
 	}
 

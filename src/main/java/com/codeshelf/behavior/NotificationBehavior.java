@@ -588,10 +588,12 @@ public class NotificationBehavior implements IApiBehavior{
 		Criteria criteria = WorkerEvent.staticGetDao().createCriteria();
 		criteria = query.toFilterCriteria(criteria);
 		long total = WorkerEvent.staticGetDao().countByCriteriaQuery(criteria);
+		
 		criteria = query.toLimitedCriteria(criteria);
 		@SuppressWarnings("unchecked")
 		List<WorkerEvent> entities = criteria.list();
-		String nextToken =query.getNextQueryToken();
+		
+		Optional<String> nextToken = query.getNextQueryToken(total);
 		return new ResultDisplay<>(total, mapToEventDisplay(entities), nextToken);
 	}
 

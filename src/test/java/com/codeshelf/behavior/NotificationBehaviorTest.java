@@ -104,6 +104,7 @@ public class NotificationBehaviorTest extends HibernateTest {
 		@SuppressWarnings("unchecked")
 		ResultDisplay<EventDisplay> results = (ResultDisplay<EventDisplay>) response.getEntity();
 		Assert.assertEquals(0, results.getResults().size());
+		Assert.assertNull(results.getNext());
 		this.getTenantPersistenceService().commitTransaction();
 	}
 	

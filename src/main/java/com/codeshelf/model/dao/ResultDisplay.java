@@ -2,6 +2,8 @@ package com.codeshelf.model.dao;
 
 import java.util.Collection;
 
+import com.google.common.base.Optional;
+
 import lombok.Getter;
 
 public class ResultDisplay<T> {
@@ -21,10 +23,10 @@ public class ResultDisplay<T> {
 		this.results = resultSet;
 	}
 
-	public ResultDisplay(Long total, Collection<T> resultSet, String nextToken) {
+	public ResultDisplay(Long total, Collection<T> resultSet, Optional<String> nextToken) {
 		this.explicitTotal = total;
 		this.results = resultSet;
-		this.next = nextToken;
+		this.next = nextToken.orNull();
 	}
 
 	public ResultDisplay(Collection<T> resultSet) {
