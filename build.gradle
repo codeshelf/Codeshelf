@@ -1,7 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'groovy'
-task wrapper(type: Wrapper) { gradleVersion = '2.2.1' }
+task wrapper(type: Wrapper) { gradleVersion = '2.11' }
 
 tasks.eclipse.dependsOn(cleanEclipse) // always clean project
 eclipse {
@@ -145,7 +145,7 @@ dependencies {
 
 	testCompile group: 'junit', name: 'junit', version: '4.+'
 	testCompile 'com.natpryce:make-it-easy:3.1.0',
-			'com.h2database:h2:1.3.172'
+			'com.h2database:h2:1.4.191'
 }
 
 configurations.all {
