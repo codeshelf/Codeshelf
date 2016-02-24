@@ -129,13 +129,14 @@ public class ImportResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response uploadWorkers(
         @FormDataParam("file") InputStream fileInputStream,
-        @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
+        @FormDataParam("file") FormDataContentDisposition contentDispositionHeader,
+        @FormDataParam("append") @DefaultValue(value = "false") boolean append) {
 		
 		try {
 			long receivedTime = System.currentTimeMillis();
 			Reader reader = new InputStreamReader(fileInputStream);
 			
-			boolean result = this.workerImporter.importWorkersFromCsvStream(reader, facility, new java.sql.Timestamp(receivedTime));
+			boolean result = this.workerImporter.importWorkersFromCsvStream(reader, facility, append, new java.sql.Timestamp(receivedTime));
 			if (result) {
 				return BaseResponse.buildResponse(null, Status.OK);				
 			}
