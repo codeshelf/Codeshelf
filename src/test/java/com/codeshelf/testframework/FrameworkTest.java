@@ -664,6 +664,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 			facility = Facility.createFacility(useFacilityId, "", Point.getZeroPoint());
 			Facility.staticGetDao().store(facility);
 		}
+		//Under Java8 and h2 there were whole host of constraint violations in che if facility was not committed first
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		this.networkPersistentId = network.getPersistentId();
