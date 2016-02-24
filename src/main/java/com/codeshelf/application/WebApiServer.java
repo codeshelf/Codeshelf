@@ -128,7 +128,7 @@ public class WebApiServer {
 			server.start();
 		}
 		catch (Exception e) {
-			LOGGER.error("Failed to start admin server", e);
+			LOGGER.error("Failed to start admin server on port:" + port, e);
 		}
 	}
 
