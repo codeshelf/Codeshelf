@@ -1,12 +1,14 @@
 package com.codeshelf.behavior;
 
+import static com.codeshelf.model.domain.WorkerEvent.EventType.COMPLETE;
+import static com.codeshelf.model.domain.WorkerEvent.EventType.SHORT;
+import static com.codeshelf.model.domain.WorkerEvent.EventType.SKIP_ITEM_SCAN;
 import static org.mockito.Mockito.mock;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.hibernate.criterion.Criterion;
@@ -17,7 +19,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import com.codeshelf.api.resources.subresources.WorkerResource;
+import com.codeshelf.api.resources.EventsResource;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
@@ -30,7 +32,6 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
-import static com.codeshelf.model.domain.WorkerEvent.EventType.*;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -76,8 +77,8 @@ public class NotificationBehaviorTest extends HibernateTest {
 		}
 
 		
-		WorkerResource workerResource = new WorkerResource(behavior);
-		workerResource.setWorker(worker);
+		EventsResource eventsResource = new EventsResource(behavior);
+		eventsResource.setWorker(worker);
 		
 		
 		Form originalForm = new Form();
@@ -87,9 +88,7 @@ public class NotificationBehaviorTest extends HibernateTest {
 		Mockito.when(uriInfo.getQueryParameters()).thenReturn(originalForm);
 		int counter = 0;
 		for (WorkerEvent event : events) {
-			Response response = workerResource.getEvents(uriInfo);
-			@SuppressWarnings("unchecked")
-			ResultDisplay<EventDisplay> results = (ResultDisplay<EventDisplay>) response.getEntity();
+			ResultDisplay<EventDisplay> results = eventsResource.getPagedEvents(uriInfo);
 			Assert.assertEquals(3, results.getTotal());
 			Assert.assertEquals("On iteration " + counter, originalForm.getFirst("limit"), String.valueOf(results.getResults().size()));
 			Assert.assertEquals("On iteration " + counter, event.getCreated(), results.getResults().iterator().next().getCreatedAt());
@@ -100,9 +99,7 @@ public class NotificationBehaviorTest extends HibernateTest {
 			Mockito.when(uriInfo.getQueryParameters()).thenReturn(nextForm);
 			counter++;
 		}
-		Response response = workerResource.getEvents(uriInfo);
-		@SuppressWarnings("unchecked")
-		ResultDisplay<EventDisplay> results = (ResultDisplay<EventDisplay>) response.getEntity();
+		ResultDisplay<EventDisplay> results = eventsResource.getPagedEvents(uriInfo);
 		Assert.assertEquals(0, results.getResults().size());
 		Assert.assertNull(results.getNext());
 		this.getTenantPersistenceService().commitTransaction();

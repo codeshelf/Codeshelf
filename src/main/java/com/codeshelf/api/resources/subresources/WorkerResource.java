@@ -1,12 +1,5 @@
 package com.codeshelf.api.resources.subresources;
 
-import static com.google.common.collect.ImmutableList.of;
-import static org.hibernate.criterion.Order.desc;
-import static org.hibernate.criterion.Property.forName;
-
-import java.net.URLDecoder;
-import java.sql.Timestamp;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -20,26 +13,24 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.joda.time.DateTime;
-import org.joda.time.Interval;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.ErrorResponse;
-import com.codeshelf.api.responses.EventDisplay;
+import com.codeshelf.api.resources.EventsResource;
 import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.behavior.NotificationBehavior.HistogramParams;
 import com.codeshelf.behavior.NotificationBehavior.HistogramResult;
-import com.codeshelf.model.dao.PageQuery;
-import com.codeshelf.model.dao.ResultDisplay;
 import com.codeshelf.model.domain.Worker;
-import com.google.common.base.MoreObjects;
 import com.google.inject.Inject;
-import com.sun.jersey.api.representation.Form;
-import com.sun.jersey.api.uri.UriComponent;
+import com.sun.jersey.api.core.ResourceContext;
 
 import lombok.Setter;
 
 public class WorkerResource {
+	
+	@Context
+	private ResourceContext								resourceContext;
+	
 	@Setter
 	private Worker worker;
 	private NotificationBehavior notificationBehavior;
@@ -96,42 +87,15 @@ public class WorkerResource {
 		}
 	}
 
-	@GET
+	
 	@Path("/events")
-	@RequiresPermissions("worker:view")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getEvents(@Context UriInfo uriInfo) throws Exception {
-		MultivaluedMap<String, String> requestParameters = new Form();
-		if (uriInfo != null) {
-			requestParameters =  uriInfo.getQueryParameters();	
-		}
-		
-		MultivaluedMap<String, String> parametersToUse = null;
-		if (requestParameters.containsKey("next")) {
-			String queryString = requestParameters.getFirst("next");
-			parametersToUse  = UriComponent.decodeQuery(URLDecoder.decode(queryString, "UTF-8"), true);
-		}
-		else {
-			parametersToUse = requestParameters;
-		}
-		
-		DateTime now = DateTime.now();
-		parametersToUse.putSingle("created", 
-			MoreObjects.firstNonNull(parametersToUse.getFirst("created"), new Interval(now.minusDays(14), now).toString()));
-		
-		String createdIntervalValue = parametersToUse.getFirst("created");
-		Interval maxCreated = new Interval(createdIntervalValue); 
-		PageQuery pageQuery = new PageQuery(
-			parametersToUse,
-			of(forName("parent").eq(worker.getFacility()),
-			   forName("workerId").eq(worker.getDomainId()),
-			   forName("created").between(new Timestamp(maxCreated.getStartMillis()), new Timestamp(maxCreated.getEndMillis()))),
-			of(desc("created")));
-		ResultDisplay<EventDisplay> results = notificationBehavior.getEventsForWorkerId(pageQuery);
-		return BaseResponse.buildResponse(results);
+	public EventsResource getEvents() {
+		EventsResource r = resourceContext.getResource(EventsResource.class);
+		r.setWorker(worker);
+		return r;
 	}
 
-	
+	//TODO move to events resource for carts and worker
 	@GET
 	@Path("/events/histogram")
 	@RequiresPermissions("worker:view")
