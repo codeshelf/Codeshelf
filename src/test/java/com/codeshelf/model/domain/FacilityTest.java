@@ -27,6 +27,8 @@ public class FacilityTest extends ServerTest { // TODO: mock property service so
 	public final void testSetSiteControllerId() {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
+		facility = Facility.staticGetDao().findByPersistentId(facility.getPersistentId());
+		
 		String testId = "11312324";
 		String initialPrimarySiteControllerId = facility.getPrimarySiteControllerId();
 		Assert.assertNotEquals(testId, initialPrimarySiteControllerId);
@@ -41,6 +43,7 @@ public class FacilityTest extends ServerTest { // TODO: mock property service so
 	public final void testChangeSiteControllerId() {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
+		facility = Facility.staticGetDao().findByPersistentId(facility.getPersistentId());
 		String testId = "11312324";
 		String secondTestId = "222222";
 		facility.setPrimarySiteControllerId(testId);
