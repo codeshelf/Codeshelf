@@ -242,6 +242,7 @@ public class NotificationBehaviorTest extends HibernateTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		NotificationBehavior behavior = new NotificationBehavior();
+		che = Che.staticGetDao().findByPersistentId(che.getPersistentId());
 		storePickEvent(behavior, che, eventTime);
 		this.getTenantPersistenceService().commitTransaction();
 
