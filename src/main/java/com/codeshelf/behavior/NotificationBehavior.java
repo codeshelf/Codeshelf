@@ -551,20 +551,6 @@ public class NotificationBehavior implements IApiBehavior{
 		return result;
 	}
 
-	public ResultDisplay<EventDisplay> getEventsForChe(Che che, Optional<Interval> created, Optional<Integer> limit) {
-		int limitValue = limit.or(15);
-
-
-		Criteria criteria = WorkerEvent.staticGetDao()
-		.createCriteria()
-		.add(Property.forName("devicePersistentId").eq(che.getPersistentId().toString()));
-		if (created.isPresent()) {
-			criteria.add(GenericDaoABC.createIntervalRestriction("created", created.get()));
-		}
-		ResultDisplay<WorkerEvent> workerEvents = WorkerEvent.staticGetDao().findByCriteriaQueryPartial(criteria, Order.desc("created"), limitValue);
-		return new ResultDisplay<>(workerEvents.getTotal(), mapToEventDisplay(new ArrayList<WorkerEvent>(workerEvents.getResults())));
-	}
-
 	@SuppressWarnings("unchecked")
 	public List<EventDisplay> getOrderEventsForOrderId(Facility facility, String orderDomainId) {
 		DetachedCriteria detailUUIDs = DetachedCriteria.forClass(OrderDetail.class)
@@ -583,7 +569,7 @@ public class NotificationBehavior implements IApiBehavior{
 	}
 
 
-	public ResultDisplay<EventDisplay> getEventsForWorkerId(PageQuery query) throws JsonProcessingException {
+	public ResultDisplay<EventDisplay> getPagedEvents(PageQuery query) throws JsonProcessingException {
 
 		Criteria criteria = WorkerEvent.staticGetDao().createCriteria();
 		criteria = query.toFilterCriteria(criteria);

@@ -75,6 +75,9 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 			}
 
 			LOGGER.debug("End location alias import.");
+		} else {
+			LOGGER.warn("Did not find any workers in file");
+			result = false;
 		}
 		return result;
 	}

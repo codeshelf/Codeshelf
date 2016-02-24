@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.codeshelf.api.ErrorResponse;
+import com.codeshelf.api.resources.EventsResource;
 import com.codeshelf.api.resources.WorkersResource;
 import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.api.resources.subresources.WorkerResource;
@@ -204,10 +205,10 @@ public class WorkerTest extends HibernateTest {
 		
 		Form form = new Form();
 		form.add("limit", "1");
-		WorkerResource workerResource = getWorkerResource(worker1);
+		EventsResource eventsResource = getEventsResource(worker1);
 		UriInfo uriInfo = mock(UriInfo.class);
 		Mockito.when(uriInfo.getQueryParameters()).thenReturn(form);
-		workerResource.getEvents(uriInfo);
+		eventsResource.getPagedEvents(uriInfo);
 
 		
 		this.getTenantPersistenceService().commitTransaction();
@@ -272,7 +273,11 @@ public class WorkerTest extends HibernateTest {
 		return workerResource;
 	}
 
-	
+	private EventsResource getEventsResource(Worker worker) throws Exception {
+		EventsResource eventsResource = new EventsResource(new NotificationBehavior());
+		eventsResource.setWorker(worker);
+		return eventsResource;
+	}	
 	private Worker createWorkerObject(Boolean active,
 		String firstName,
 		String lastName,
