@@ -773,7 +773,12 @@ public class WorkBehavior implements IApiBehavior {
 		return Optional.fromNullable(this.exportProvider.getEdiExporter(facility));
 	}
 
-	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
+	/**
+	 * @param cheId the che operating on the work instruction
+	 * @param incomingWI the work instruction and the modifications to store
+	 * @return updated work instruction
+	 */
+	public WorkInstruction completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
 		Che che = Che.staticGetDao().findByPersistentId(cheId);
 		if (che != null) {
 			WorkInstruction storedWi = null;
@@ -813,12 +818,14 @@ public class WorkBehavior implements IApiBehavior {
 						}
 					}
 				}
+				return storedWi;
 			} catch (DaoException e) {
 				LOGGER.error("Unable to record work instruction: " + incomingWI, e);
 			}
 		} else {
 			throw new IllegalArgumentException("Could not find che for id: " + cheId);
 		}
+		return null;
 	}
 
 	// --------------------------------------------------------------------------
