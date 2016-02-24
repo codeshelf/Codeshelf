@@ -493,7 +493,6 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 			sampleSummary += ";";
 		}
 		LOGGER.info("sent to aisles controller:" + sampleSummary);
-		;
 	}
 
 	@Override

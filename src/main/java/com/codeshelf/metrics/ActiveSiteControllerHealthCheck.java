@@ -43,7 +43,8 @@ public class ActiveSiteControllerHealthCheck extends HealthCheckRefreshJob{
     		}
     	}
     	if(badVersions > 0) {
-    		saveResults(facility, false, badVersions+" site controllers have not been upgraded");
+    		String msgHelper = badVersions == 1 ? "controller has" : "controllers have";
+			saveResults(facility, false, badVersions + " site " + msgHelper + "  not been upgraded");
     		return;
     	} // else
     	saveResults(facility, true, badVersions+" site controllers have not been upgraded");
