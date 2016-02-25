@@ -65,7 +65,7 @@ public class FormUtility {
 
 	
 	public static Map<String, String> getValidFields(MultivaluedMap<String, String> userParams, Set<String> validFields) {
-		return getValidFields(userParams, validFields, Collections.emptySet());
+		return getValidFields(userParams, validFields, Collections.<String>emptySet());
 	};
 	
 	public static void throwUiValidationException(String fieldName, Object error, ErrorCode errorCode){
