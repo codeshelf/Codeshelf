@@ -30,7 +30,7 @@ import com.codeshelf.testframework.ServerTest;
  * @author jon ranstrom
  *
  */
-public class PickSimulaneousWis extends ServerTest {
+public class PickSimultaneousWis extends ServerTest {
 
 	@SuppressWarnings({ "unused" })
 	private Facility setUpSimpleNoSlotFacility(String inOrganizationName) {
