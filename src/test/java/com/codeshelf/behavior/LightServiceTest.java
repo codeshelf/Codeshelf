@@ -38,7 +38,6 @@ import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
-import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
@@ -353,8 +352,7 @@ public class LightServiceTest extends ServerTest {
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,120,,\r\n"; //
 
-		String fName = "F-" + inOrganizationName;
-		Facility facility= Facility.createFacility(fName, "TEST", Point.getZeroPoint());
+		Facility facility= generateTestFacility();
 		importAislesData(facility, csvString);
 
 		// Get the aisles
