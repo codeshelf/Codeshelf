@@ -14,6 +14,7 @@ import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
+import com.codeshelf.util.ThreadUtils;
 
 public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(CheProcessPutWallSlowPick.class);
@@ -32,7 +33,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		picker1.loginAndSetup("Picker #1");
 		String ordersAndPositions[][] = {{"11114", "L%P14"},{"11115", "L%P15"},{"11116", "L%P16"}};
 		assignOrdersToPutWall(picker1, ordersAndPositions);
-
+		ThreadUtils.sleep(500);
 		LOGGER.info("2: P14 is in WALL1. P15 and P16 are in WALL2. Set up slow mover CHE for that SKU pick");
 
 		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
@@ -218,27 +219,36 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 
 	@Test
 	public final void slowMoverOrderAndWallMix() throws IOException {
+		beginTransaction();
+		setCheLocation(cheId2, "F11");
+		commitTransaction();
+		
 		PickSimulator picker2 = createPickSim(cheGuid2);
+		
 		picker2.loginAndSetup("Picker #2");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker2.setupOrderIdAsContainer("12345", "1");
 		picker2.setupOrderIdAsContainer("WALL2", "2");
-
 		picker2.scanCommand("START");
-		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 
-		// TODO fix
-		//Verify 2 items on PosCon1. Order "12345" has 3 items, but only 2 of them are on the path che picks.
+		//Verify 1 or 2 items on PosCon1. Order "12345" has 3 items, 2 on one path, 1 on another
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("2"), posConValue1);
 
 		//Confirm nothing on PosCon2
 		Byte posConValue2 = picker2.getLastSentPositionControllerDisplayValue((byte) 2);
 		Assert.assertEquals(ZERO, posConValue2);
+
+
 	}
 
 	@Test
 	public final void slowMoverFreeOrders() throws IOException {
+		beginTransaction();
+		setCheLocation(cheId2, "F21");
+		commitTransaction();
+		
 		PickSimulator picker2 = createPickSim(cheGuid2);
 		picker2.loginAndSetup("Picker #2");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
