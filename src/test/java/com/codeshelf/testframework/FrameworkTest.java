@@ -665,27 +665,20 @@ public abstract class FrameworkTest implements IntegrationTest {
 			Facility.staticGetDao().store(facility);
 		}
 		//Under Java8 and h2 there were whole host of constraint violations in che if facility was not committed first
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+//		this.getTenantPersistenceService().commitTransaction();
+//		this.getTenantPersistenceService().beginTransaction();
 
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		this.networkPersistentId = network.getPersistentId();
 
-		List<Che> ches = new ArrayList<Che>(network.getChes().values());
-		Che che1 = ches.get(0);
-		che1.setColor(ColorEnum.MAGENTA);
-		che1.setDeviceNetGuid(cheGuid1);
-		che1.setDomainId(cheId1);
+		Che che1 = network.createChe(cheId1, cheGuid1, ColorEnum.MAGENTA);
 		this.che1PersistentId = che1.getPersistentId();
 
-		Che che2 = ches.get(1);
-		che2.setColor(ColorEnum.WHITE);
-		che2.setDeviceNetGuid(cheGuid2);
-		che2.setDomainId(cheId2);
+		Che che2 = network.createChe(cheId2, cheGuid2, ColorEnum.WHITE);
 		this.che2PersistentId = che2.getPersistentId();
 
-		Che che3 = network.createChe(cheId3, cheGuid3);
-		che3.setColor(ColorEnum.GREEN);
+		
+		Che che3 = network.createChe(cheId3, cheGuid3, ColorEnum.GREEN);
 		this.che3PersistentId = che3.getPersistentId();
 		
 		network.findOrCreateLedController(ledconId1, ledconGuid1);

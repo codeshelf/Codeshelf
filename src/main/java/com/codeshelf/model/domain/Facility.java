@@ -43,7 +43,6 @@ import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.IEdiGateway;
 import com.codeshelf.edi.IEdiImportGateway;
 import com.codeshelf.edi.WorkInstructionCsvBean;
-import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.EdiGatewayStateEnum;
@@ -1303,18 +1302,6 @@ public class Facility extends Location {
 
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();
-
-		// Setup two dummy CHEs
-		int cheNum = 0;
-		for (int chesCreated = 0; chesCreated < 2; chesCreated++) {
-			String cheName;
-			do {
-				cheNum++;
-				cheName = "CHE" + cheNum;
-			} while (Che.staticGetDao().findByDomainId(null, cheName) != null);
-			@SuppressWarnings("unused")
-			Che che = network.createChe(cheName, new NetGuid(String.format("0x%08X", 0x9990 + cheNum)));
-		}
 
 		return facility;
 	}

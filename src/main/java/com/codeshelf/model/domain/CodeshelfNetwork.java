@@ -25,6 +25,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
@@ -225,16 +226,15 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	public Che createChe(String inDomainId, NetGuid inGuid) {
+	
+	public Che createChe(String inDomainId, NetGuid inGuid, ColorEnum inColor) {
 		// If the CHE doesn't already exist then create it.
 		Che che = Che.staticGetDao().findByDomainId(this, inGuid.getHexStringNoPrefix());
 		if (che == null) {
 			che = new Che();
 			che.setDomainId(inDomainId);
 			che.setDeviceNetGuid(inGuid);
+			che.setColor(inColor);
 			this.addChe(che);
 			try {
 				Che.staticGetDao().store(che);
@@ -243,6 +243,13 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 			}
 		}
 		return che;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	public Che createChe(String inDomainId, NetGuid inGuid) {
+		return createChe(inDomainId, inGuid, ColorEnum.BLUE);
 	}
 
 	/**

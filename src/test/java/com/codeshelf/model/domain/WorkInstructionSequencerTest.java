@@ -8,10 +8,13 @@ package com.codeshelf.model.domain;
 import java.io.IOException;
 import java.util.List;
 
+import org.hibernate.envers.internal.reader.FirstLevelCache;
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.behavior.PropertyBehavior;
+import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.testframework.ServerTest;
@@ -49,6 +52,8 @@ public class WorkInstructionSequencerTest extends ServerTest {
 				+ "Tier,T3,,0,80,0,,\r\n"; //
 		String fName = "F-" + inOrganizationName;
 		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
+		CodeshelfNetwork network = facility.getNetworks().get(0);
+		network.createChe("CHE1", new NetGuid("0xdeadbeef"), ColorEnum.MAGENTA);
 		importAislesData(facility, csvString);
 		
 		// Get the aisle
@@ -143,7 +148,8 @@ public class WorkInstructionSequencerTest extends ServerTest {
 		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
-		List<WorkInstruction> aList = startWorkFromBeginning(facility, "CHE1", "12345");
+		Che che = firstChe(facility);
+		List<WorkInstruction> aList = startWorkFromBeginning(facility, che.getDomainId(), "12345");
 		int wiCount = aList.size();
 		Assert.assertEquals(4, wiCount);
 
@@ -169,4 +175,16 @@ public class WorkInstructionSequencerTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 	}
+	
+	private Che firstChe(Facility facility) {
+		Che firstChe = null;
+		for (CodeshelfNetwork network : facility.getNetworks()) {
+			for (Che che : network.getChes().values()) {
+				firstChe = che;
+				break;
+			}
+		}
+		return firstChe;
+	}
+
 }

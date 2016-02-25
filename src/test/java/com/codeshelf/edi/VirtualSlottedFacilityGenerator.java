@@ -7,9 +7,11 @@ import java.sql.Timestamp;
 
 import org.junit.Assert;
 
+import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
@@ -119,6 +121,8 @@ public class VirtualSlottedFacilityGenerator {
 		locationAliasImporter.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
 		CodeshelfNetwork network = facility.getNetworks().get(0);
+
+		network.createChe("CHE1", new NetGuid("0xdeadbeef"), ColorEnum.MAGENTA);
 
 		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
 		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
