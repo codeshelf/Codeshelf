@@ -20,6 +20,7 @@ import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerKind;
 import com.codeshelf.model.domain.Facility;
@@ -84,8 +85,7 @@ public class WorkInstructionGenerator {
 		Container.staticGetDao().store(container);
 
 
-		//Che che1 = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), "CHE1");
-		Che che1 = Che.staticGetDao().findByDomainId(null, "CHE1");
+		Che che1 = firstChe(facility);
 		
 		WorkInstruction workInstruction = WiFactory.createWorkInstruction(statusEnum, typeEnum, WiPurpose.WiPurposeOutboundPick, orderDetail, che1, assignedTime, container, aisle);
 		workInstruction.setStarted(  new Timestamp(System.currentTimeMillis()-5000));
@@ -135,5 +135,16 @@ public class WorkInstructionGenerator {
 		OrderDetail.staticGetDao().store(detail);
 		return detail;	
 	}	
+	private Che firstChe(Facility facility) {
+		Che firstChe = null;
+		for (CodeshelfNetwork network : facility.getNetworks()) {
+			for (Che che : network.getChes().values()) {
+				firstChe = che;
+				break;
+			}
+		}
+		return firstChe;
+	}
+
 }
 

@@ -651,7 +651,7 @@ public class InventoryImporterTest extends ServerTest {
 		Assert.assertTrue(this.getTenantPersistenceService().hasAnyActiveTransactions());
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);
-		Che theChe = theNetwork.getChe("CHE1");
+		Che theChe = theNetwork.getChe(cheId1);
 		Assert.assertNotNull(theChe);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -819,7 +819,7 @@ public class InventoryImporterTest extends ServerTest {
 		// Let's find our CHE
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);
-		Che theChe = theNetwork.getChe("CHE1");
+		Che theChe = theNetwork.getChe(cheId1);
 		Assert.assertNotNull(theChe);
 
 		// Housekeeping left on. Expect 4 normal WIs and one housekeep
