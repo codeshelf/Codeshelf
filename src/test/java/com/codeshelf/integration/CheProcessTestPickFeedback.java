@@ -198,12 +198,12 @@ public class CheProcessTestPickFeedback extends ServerTest {
 
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
-		//Make sure all position controllers are cleared - except for case 3,4,6 since they are zero and 2 since that is the first task
-		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
+		//Make sure all position controllers are cleared - except for case 3,4,6 since they are zero and 1 since that is the first task
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
 
-		//Make sure position 2 shows the proper item count for picking
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue(), 1);
+		//Make sure position 1 shows the proper item count for picking
+		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
 
 		//Case 3: Unknown order id so display dim, solid, 0
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), ZERO);
