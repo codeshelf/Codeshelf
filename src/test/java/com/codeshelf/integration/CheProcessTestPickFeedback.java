@@ -1449,21 +1449,23 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		compareInstructionsList(wiList, expectations);
 
 		LOGGER.info("5: pick two items before bay change");
-		picker.pick(2, 40);
-		picker.pick(1, 40);
-
+		byte firstPos = (byte)picker.buttonFor(picker.getActivePick());
+		picker.pickItemAuto();
+		byte lastPos = (byte)picker.buttonFor(picker.getActivePick());
+		picker.pickItemAuto();
+		
 		// JR_BUG
 		LOGGER.info("6: verify 'bc' code on position 1; then - press button to advance");
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
-		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_B, picker.getLastSentPositionControllerMaxQty((byte) 1));
-		// picker.buttonPress(1, 0);
-		picker.buttonPress(1,PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE,picker.getLastSentPositionControllerDisplayValue(lastPos));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_C, 		picker.getLastSentPositionControllerMinQty(lastPos));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_B, 		picker.getLastSentPositionControllerMaxQty(lastPos));
+		picker.buttonPress(lastPos,PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 
 		// The main purpose of the test.
 		LOGGER.info("7: verify the correct quantity on position 2, and nothing on position 1");
-		Assert.assertEquals(new Byte("30"), picker.getLastSentPositionControllerDisplayValue((byte) 2));
-		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
+		Assert.assertEquals(new Byte("30"), picker.getLastSentPositionControllerDisplayValue(firstPos));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue(lastPos));
 
 		LOGGER.info("8: wrap up the test by finishing both orders");
 		picker.pickItemAuto();
