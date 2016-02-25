@@ -28,7 +28,6 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
-import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.ServerTest;
 
@@ -49,8 +48,7 @@ public class LocationDeleteTest extends ServerTest {
 		// One controllers associated per aisle
 		// Two CHE called CHE1 and CHE2. CHE1 colored green and CHE2 magenta
 
-		String fName = "F-" + inOrganizationName;
-		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
+		Facility facility = generateTestFacility().getFacility();
 
 		if (inWhichFacility == LARGER_FACILITY)
 			readStandardAisleFile(facility);
