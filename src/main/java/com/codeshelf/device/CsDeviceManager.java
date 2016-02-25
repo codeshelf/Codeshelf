@@ -1304,8 +1304,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.warn("Unable to light poscon addresses on device {}. Device {} is not a PosConDeviceABC", controllerGuid, device);
 			return;
 		}
-		ICommand command = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.POS_SHOW_ADDR,
-			NetEndpoint.PRIMARY_ENDPOINT);
+		ICommand command = new CommandControlPosconBroadcast(NetEndpoint.PRIMARY_ENDPOINT, CommandControlPosconBroadcast.POSCON_DSP_ADDRESS);
 		device.sendRadioControllerCommand(command, true);
 	}
 	

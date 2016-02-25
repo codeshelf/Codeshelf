@@ -32,10 +32,9 @@ import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
 @EqualsAndHashCode(callSuper=true, doNotUseGetters=true)
 public final class CommandControlPosconDisplayFWVer extends CommandControlABC {
 
-	private static final Logger		LOGGER					= LoggerFactory.getLogger(CommandControlClearPosController.class);
+	private static final Logger		LOGGER					= LoggerFactory.getLogger(CommandControlPosconDisplayFWVer.class);
 
 	private static final Integer	REQUEST_COMMAND_BYTES	= 1;
-	private static final Integer	RESEND_DELAY			= 60;
 
 	@Accessors(prefix = "m")
 	@Getter
@@ -67,7 +66,7 @@ public final class CommandControlPosconDisplayFWVer extends CommandControlABC {
 	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
 	public String doToString() {
-		return "Clear pos controller: pos: " + mPosNum;
+		return "Display POSCON fw version: pos: " + mPosNum;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -115,6 +114,6 @@ public final class CommandControlPosconDisplayFWVer extends CommandControlABC {
 	*  @return
 	*/
 	public int getResendDelay() {
-		return RESEND_DELAY;
+		return DEFAULT_RESEND_DELAY;
 	}
 }

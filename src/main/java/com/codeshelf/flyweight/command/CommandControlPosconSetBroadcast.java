@@ -7,6 +7,7 @@ import java.util.BitSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
 import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
 
@@ -14,29 +15,16 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-public class CommandControlPosconLedBroadcast extends CommandControlABC{
+public class CommandControlPosconSetBroadcast extends CommandControlABC{
 	
-	private static final Logger			LOGGER					= LoggerFactory.getLogger(CommandControlPosconLedBroadcast.class);
+	private static final Logger			LOGGER					= LoggerFactory.getLogger(CommandControlPosconSetBroadcast.class);
 	
+	private static final int	RESEND_DELAY					= 60;
 	public static final int		EXCLUDE_MAP_BYTES_LEN			= 32;
-	public static final byte	BLINK							= 0;
-	public static final byte	STEADY							= 1;
-
-	@Accessors(prefix = "m")
-	@Getter @Setter
-	private byte 				mRedValue						= 0;
 	
 	@Accessors(prefix = "m")
 	@Getter @Setter
-	private byte 				mGreenValue						= 0;
-	
-	@Accessors(prefix = "m")
-	@Getter @Setter
-	private byte 				mBlueValue						= 0;
-	
-	@Accessors(prefix = "m")
-	@Getter @Setter
-	private byte 				mLightStyle						= 0;
+	private PosControllerInstr	mPosconInstr					= null;
 	
 	@Accessors(prefix = "m")
 	@Getter @Setter
@@ -50,13 +38,11 @@ public class CommandControlPosconLedBroadcast extends CommandControlABC{
 	 *  This is the constructor to use to create a data command to send to the network.
 	 *  @param inEndpoint	The end point to send the command.
 	 */
-	public CommandControlPosconLedBroadcast(final NetEndpoint inEndpoint,
-		byte inRed, byte inGreen, byte inBlue, byte inLightStyle, BitSet inIncludeMap) {
-		super(inEndpoint, new NetCommandId(CommandControlABC.POSCON_LED_BROADCAST));
-		setRedValue(inRed);
-		setGreenValue(inGreen);
-		setBlueValue(inBlue);
-		setLightStyle(inLightStyle);
+	public CommandControlPosconSetBroadcast(final NetEndpoint inEndpoint,
+		PosControllerInstr inPosconInstr, BitSet inIncludeMap) {
+		super(inEndpoint, new NetCommandId(CommandControlABC.POSCON_SET_BROADCAST));
+	
+		setPosconInstr(inPosconInstr);
 		setIncludeMap(inIncludeMap);
 	}
 
@@ -64,13 +50,13 @@ public class CommandControlPosconLedBroadcast extends CommandControlABC{
 	/**
 	 *  This is the constructor to use to create a data command that's read off of the network input stream.
 	 */
-	public CommandControlPosconLedBroadcast() {
-		super(new NetCommandId(CommandControlABC.POSCON_LED_BROADCAST));
+	public CommandControlPosconSetBroadcast() {
+		super(new NetCommandId(CommandControlABC.POSCON_SET_BROADCAST));
 	}
 
 	@Override
 	protected String doToString() {
-		return "POSCON LED broadcast: inclusive bitmap:" + mIncludeMap.toString();
+		return "POSCON set broadcast: inclusive bitmap:" + mIncludeMap.toString();
 	}
 	
 	/* --------------------------------------------------------------------------
@@ -87,10 +73,11 @@ public class CommandControlPosconLedBroadcast extends CommandControlABC{
 		}
 		
 		try {
-			inOutputStream.writeByte(mRedValue);
-			inOutputStream.writeByte(mGreenValue);
-			inOutputStream.writeByte(mBlueValue);
-			inOutputStream.writeByte(mLightStyle);
+			inOutputStream.writeByte(mPosconInstr.getReqQty());
+			inOutputStream.writeByte(mPosconInstr.getMinQty());
+			inOutputStream.writeByte(mPosconInstr.getMaxQty());
+			inOutputStream.writeByte(mPosconInstr.getFreq());
+			inOutputStream.writeByte(mPosconInstr.getDutyCycle());
 			if (bytes != null) {
 				inOutputStream.writeByte((byte) bytes.length);
 				inOutputStream.writeBytes(bytes, bytes.length);
@@ -111,12 +98,15 @@ public class CommandControlPosconLedBroadcast extends CommandControlABC{
 		super.doFromStream(inInputStream, inCommandByteCount);
 		
 		try {
-			mRedValue = inInputStream.readByte();
-			mGreenValue = inInputStream.readByte();
-			mBlueValue = inInputStream.readByte();
-			mMapBytesLen = inInputStream.readByte();
-			mLightStyle = inInputStream.readByte();
+			byte position = 0;
+			byte reqQty = inInputStream.readByte();
+			byte minQty = inInputStream.readByte();
+			byte maxQty = inInputStream.readByte();
+			byte freq = inInputStream.readByte();
+			byte dutyCycle = inInputStream.readByte();
+			mPosconInstr = new PosControllerInstr(position, reqQty, minQty, maxQty, freq, dutyCycle);
 			
+			mMapBytesLen = inInputStream.readByte();
 			if (mMapBytesLen > 0) {
 				byte[] bytes = new byte[mMapBytesLen];
 				inInputStream.readBytes(bytes, (int) mMapBytesLen);
@@ -134,7 +124,7 @@ public class CommandControlPosconLedBroadcast extends CommandControlABC{
 	*  @return
 	*/
 	public int getResendDelay() {
-		return DEFAULT_RESEND_DELAY;
+		return RESEND_DELAY;
 	}
 
 }

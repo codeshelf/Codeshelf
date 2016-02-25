@@ -29,7 +29,7 @@ public class CommandControlPosconSetupStart extends CommandControlABC{
 	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
 	public String doToString() {
-		return "Start mass configuration";
+		return "Start POSCON mass configuration";
 	}
 	
 	/* --------------------------------------------------------------------------

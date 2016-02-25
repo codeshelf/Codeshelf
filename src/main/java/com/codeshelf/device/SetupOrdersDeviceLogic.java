@@ -1563,9 +1563,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			setState(CheStateEnum.CONTAINER_POSITION);
 
 			if (sendPosConBroadcast) {
-				CommandControlPosconBroadcast broadcast = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.POS_SHOW_ADDR,
-					NetEndpoint.PRIMARY_ENDPOINT);
-				broadcast.setExcludeMap(getUsedPositionsByteArray());
+				CommandControlPosconBroadcast broadcast = new CommandControlPosconBroadcast(NetEndpoint.PRIMARY_ENDPOINT, CommandControlPosconBroadcast.POSCON_DSP_ADDRESS);
+				broadcast.setIncludeMapBytes(getUsedPositionsByteArray());
 				sendRadioControllerCommand(broadcast, true);
 			}
 
@@ -2010,9 +2009,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		LOGGER.debug("Sending Container Assaignments {}", instructions);
 
 		//Adding the "clear" code below to clear PosCons from the new button-placement mode.
-		CommandControlPosconBroadcast broadcast = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.CLEAR_POSCON,
-			NetEndpoint.PRIMARY_ENDPOINT);
-		broadcast.setExcludeMap(getUsedPositionsByteArray());
+		CommandControlPosconBroadcast broadcast = new CommandControlPosconBroadcast(NetEndpoint.PRIMARY_ENDPOINT, CommandControlPosconBroadcast.CLEAR_DISPLAY);
+		broadcast.setIncludeMapBytes(getUsedPositionsByteArray());
 		sendRadioControllerCommand(broadcast, true);
 
 		sendPositionControllerInstructions(instructions);

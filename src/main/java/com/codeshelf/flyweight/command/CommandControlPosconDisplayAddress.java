@@ -14,7 +14,7 @@ import lombok.experimental.Accessors;
 
 public class CommandControlPosconDisplayAddress extends CommandControlABC{
 
-	private static final Logger		LOGGER					= LoggerFactory.getLogger(CommandControlClearPosController.class);
+	private static final Logger		LOGGER					= LoggerFactory.getLogger(CommandControlPosconDisplayAddress.class);
 
 	private static final Integer	REQUEST_COMMAND_BYTES	= 1;
 
