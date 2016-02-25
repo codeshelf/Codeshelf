@@ -34,6 +34,7 @@ public class UsersResource {
 	private static final Logger			LOGGER					= LoggerFactory.getLogger(UsersResource.class);
 	private static final Set<String>	validCreateUserFields	= new HashSet<String>();
 	private static final Set<String>	validUpdateUserFields	= new HashSet<String>();
+	private static final Set<String>	multiValueFields        = new HashSet<String>();
 
 	static {
 		validCreateUserFields.add("username");
@@ -41,6 +42,9 @@ public class UsersResource {
 
 		validUpdateUserFields.add("active");
 		validUpdateUserFields.add("roles");
+		
+		multiValueFields.add("roles");
+
 	}
 
 	@GET
@@ -78,7 +82,7 @@ public class UsersResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Response createUser(MultivaluedMap<String, String> userParams) {
-		Map<String, String> cleanInput = FormUtility.getValidFields(userParams, validCreateUserFields);
+		Map<String, String> cleanInput = FormUtility.getValidFields(userParams, validCreateUserFields, multiValueFields);
 		if(cleanInput != null) {
 			String roleList = cleanInput.get("roles");
 			Set<UserRole> roles = null;
@@ -129,7 +133,7 @@ public class UsersResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Response updateUser(@PathParam("id") Integer id, MultivaluedMap<String, String> userParams) {
-		Map<String, String> cleanInput = FormUtility.getValidFields(userParams, validUpdateUserFields);
+		Map<String, String> cleanInput = FormUtility.getValidFields(userParams, validUpdateUserFields, multiValueFields);
 		if(cleanInput != null) {
 			User user = TenantManagerService.getInstance().getUser(id);
 			if(user != null 

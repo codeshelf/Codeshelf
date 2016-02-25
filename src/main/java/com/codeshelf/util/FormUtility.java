@@ -16,11 +16,13 @@ import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.google.common.base.Joiner;
 
+import java.util.Collections;
+
 public class FormUtility {
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(FormUtility.class);
 	private FormUtility() {}
 
-	public static Map<String, String> getValidFields(MultivaluedMap<String, String> userParams, Set<String> validFields) {
+	public static Map<String, String> getValidFields(MultivaluedMap<String, String> userParams, Set<String> validFields, Set<String> collectionFields) {
 		Map<String, String> result = new HashMap<String, String>();
 		boolean error = false;
 	
@@ -28,16 +30,22 @@ public class FormUtility {
 			if (validFields.contains(key)) {
 				List<String> values = userParams.get(key);
 				if (values == null) {
-					LOGGER.error("null value for key {}", key); // this shouldn't happen
+					LOGGER.warn("null value for key {}", key); // this shouldn't happen
 					error = true;
 					break;
 				} else if (values.isEmpty()) {
-					LOGGER.error("no values for key {}", key); // this shouldn't happen
+					LOGGER.warn("no values for key {}", key); // this shouldn't happen
 					error = true;
 					break;
 				} else if (values.size() > 1) {
-					result.put(key, Joiner.on(",").join(values)); 
-					break;
+					if (collectionFields.contains(key)) {
+						result.put(key, Joiner.on(",").join(values)); 
+						break;
+					} else {
+						LOGGER.warn("multiple values for key {}", key); // this shouldn't happen
+						error = true;
+						break;
+					}						
 				} else {
 					result.put(key, values.get(0).trim()); // ok field
 				}
@@ -53,6 +61,11 @@ public class FormUtility {
 		}
 	
 		return error ? null : result;
+	}
+
+	
+	public static Map<String, String> getValidFields(MultivaluedMap<String, String> userParams, Set<String> validFields) {
+		return getValidFields(userParams, validFields, Collections.emptySet());
 	};
 	
 	public static void throwUiValidationException(String fieldName, Object error, ErrorCode errorCode){
