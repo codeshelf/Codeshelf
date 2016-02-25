@@ -18,7 +18,6 @@ import org.junit.Test;
 import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderGroup;
-import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.MockDaoTest;
 import com.google.common.collect.ImmutableList;
@@ -69,7 +68,8 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 		super.doBefore();
 		
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.createFacility(this.getClass().toString() + System.currentTimeMillis(), "", Point.getZeroPoint());
+		Facility facility = generateTestFacility();
+
 		exporter  = new WorkInstructionCSVExporter();
 		
 		this.facilityId = facility.getPersistentId();
