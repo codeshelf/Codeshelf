@@ -48,6 +48,8 @@ public class PickSimulaneousWis extends ServerTest {
 
 		String fName = "F-" + inOrganizationName;
 		Facility facility = Facility.createFacility( fName, "TEST", Point.getZeroPoint());
+		CodeshelfNetwork network = facility.getNetworks().get(0);
+		network.createChe(cheId1, cheGuid1);
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,Y\r\n" //
@@ -105,7 +107,6 @@ public class PickSimulaneousWis extends ServerTest {
 				+ "A3.B2.T1, D503\r\n";//
 		importLocationAliasesData(facility, csvString2);
 		
-		CodeshelfNetwork network = facility.getNetworks().get(0);
 		Che che1 = network.createChe("CHE3", new NetGuid("0x00000001"));
 		Che che2 = network.createChe("CHE4", new NetGuid("0x00000002"));
 
@@ -199,7 +200,7 @@ public class PickSimulaneousWis extends ServerTest {
 		// Let's find our CHE
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);
-		Che theChe = theNetwork.getChe("CHE1");
+		Che theChe = theNetwork.getChe(cheId1);
 		Assert.assertNotNull(theChe);
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
