@@ -117,7 +117,7 @@ public class CreatePathCommandTest extends HibernateTest {
 
 		ResponseABC response = processor.handleRequest(this.getMockWsConnection(), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
-		
+		testFacility = testFacility.reload();
 		List<Path> pathList = testFacility.getPaths();
 		Path createdPath1 = pathList.get(0);
 		// Why is facility F1? Passed in DOMID above.
