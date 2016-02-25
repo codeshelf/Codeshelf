@@ -16,7 +16,6 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
-import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
@@ -105,9 +104,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		tier2.getDao().store(tier1);
 
 		if (cheLastScannedLocation != null) {
-			Che che = getNetwork().getChe("CHE1");
-			che.setLastScannedLocation(cheLastScannedLocation);
-			Che.staticGetDao().store(che);
+			setCheLocation("CHE1", cheLastScannedLocation);
 		}
 
 		String inventory = "itemId,locationId,description,quantity,uom,inventoryDate,lotId,cmFromLeft\r\n"

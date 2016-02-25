@@ -39,10 +39,7 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 
 		// Look's like CHE1 is reused as is test to test.
-		Che che1 = Che.staticGetDao().findByDomainId(getNetwork(), "CHE1");
-		Assert.assertNotNull(che1);
-		che1.setLastScannedLocation("");
-		Che.staticGetDao().store(che1);
+		setCheLocation("CHE1", "");
 
 		return getFacility();
 	}
@@ -55,10 +52,7 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		Facility facility = setUpFacilityWithPutWall();
 		// let's find our CHE and set its last logged in value before site controller initializes
 		beginTransaction();
-		Che che1 = Che.staticGetDao().findByDomainId(getNetwork(), "CHE1");
-		Assert.assertNotNull(che1);
-		che1.setLastScannedLocation("F11");
-		Che.staticGetDao().store(che1);
+		setCheLocation("CHE1", "F11");
 		commitTransaction();
 		return facility;
 	}

@@ -294,6 +294,13 @@ public abstract class ServerTest extends HibernateTest {
 		return CodeshelfNetwork.staticGetDao().findByPersistentId(this.networkPersistentId);
 	}
 
+	protected void setCheLocation(String inDomainId, String inLocationId) {
+		Che che1 = Che.staticGetDao().findByDomainId(getNetwork(), inDomainId);
+		Assert.assertNotNull(che1);
+		che1.setLastScannedLocation(inLocationId);
+		Che.staticGetDao().store(che1);
+	}
+
 	public void logWiList(List<WorkInstruction> inList) {
 		for (WorkInstruction wi : inList) {
 			// If this is called from a list of WIs from the site controller, the WI may not have all its normal fields populated.

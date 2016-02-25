@@ -499,12 +499,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		facility = Facility.staticGetDao().reload(facility);
 		
 		// Set the che on the path of the modeled locations
-		CodeshelfNetwork network = getNetwork();
-		Assert.assertNotNull(network);
-		Che che1 = Che.staticGetDao().findByDomainId(network, cheId1);
-		Assert.assertNotNull(che1);
-		che1.setLastScannedLocation("D-27");
-		Che.staticGetDao().store(che1);
+		setCheLocation(cheId1, "D-27");
 
 		PropertyBehavior.turnOffHK(facility);
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
