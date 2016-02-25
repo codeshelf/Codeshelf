@@ -40,6 +40,7 @@ public class UsersResource {
 	private static final Logger			LOGGER					= LoggerFactory.getLogger(UsersResource.class);
 	private static final Set<String>	validCreateUserFields	= new HashSet<String>();
 	private static final Set<String>	validUpdateUserFields	= new HashSet<String>();
+	private static final Set<String>	multiValueFields        = new HashSet<String>();
 
 	static {
 		validCreateUserFields.add("tenantid");
@@ -50,6 +51,8 @@ public class UsersResource {
 		validUpdateUserFields.add("password");
 		validUpdateUserFields.add("active");
 		validUpdateUserFields.add("roles");
+
+		multiValueFields.add("roles");
 	}
 	
 	public UsersResource() {
@@ -215,7 +218,7 @@ public class UsersResource {
 		ITenantManagerService manager = TenantManagerService.getInstance();
 		User newUser = null;
 
-		Map<String, String> cleanInput = FormUtility.getValidFields(userParams, validCreateUserFields);
+		Map<String, String> cleanInput = FormUtility.getValidFields(userParams, validCreateUserFields, multiValueFields);
 		if (cleanInput != null) {
 			String username = cleanInput.get("username");
 			String tenantIdString = cleanInput.get("tenantid");
