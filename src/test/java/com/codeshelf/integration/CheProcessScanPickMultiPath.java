@@ -167,7 +167,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		//If CHE doesn't have a saved path, it will pick one with a required item closest to the beginning of the path (i.e. - pretty arbitrary)
 		//Verify the number of items on the auto-chosen path
 		List<WorkInstruction> wiList = picker.getRemainingPicksWiList();
-		String[] expectations = { "Item10", "Item14", "Item15" };
+		String[] expectations = { "Item1", "Item3", "Item5", "Item6", "Item7"};
 		compareInstructionsList(wiList, expectations);
 	}
 
