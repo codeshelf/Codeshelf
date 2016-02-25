@@ -43,7 +43,7 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 	/* 
 	 *
 	 */
-	public final boolean importWorkersFromCsvStream(Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
+	public final boolean importWorkersFromCsvStream(Reader inCsvReader, Facility inFacility, boolean inAppend, Timestamp inProcessTime) {
 		boolean result = true;
 		List<WorkerCsvBean> workerBeanList = toCsvBean(inCsvReader, WorkerCsvBean.class);
 
@@ -70,8 +70,9 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 					LOGGER.error("Unable to process record: " + workerBean, e);
 				}
 			}
-
-			archiveCheckWorkers(inFacility, inProcessTime);
+			if (!inAppend) {
+				archiveCheckWorkers(inFacility, inProcessTime);
+			}
 
 			LOGGER.debug("End location alias import.");
 		} else {

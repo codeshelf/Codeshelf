@@ -369,7 +369,7 @@ public class ScriptServerRunner {
 		}
 		String filename = parts[1];
 		InputStreamReader reader = readFile(filename);
-		workerImporterProvider.get().importWorkersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+		workerImporterProvider.get().importWorkersFromCsvStream(reader, facility, false, new Timestamp(System.currentTimeMillis()));
 	}
 
 	/**

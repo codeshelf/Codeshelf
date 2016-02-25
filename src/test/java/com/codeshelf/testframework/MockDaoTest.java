@@ -538,7 +538,7 @@ public abstract class MockDaoTest extends MinimalTest {
 	protected boolean importWorkersData(Facility facility, String workersCsvString) {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvWorkerImporter workerImporter = createWorkerImporter();
-		return workerImporter.importWorkersFromCsvStream(new StringReader(workersCsvString), facility, ediProcessTime);
+		return workerImporter.importWorkersFromCsvStream(new StringReader(workersCsvString), facility, false, ediProcessTime);
 	}
 
 	protected void importInventoryData(Facility facility, String csvString) {

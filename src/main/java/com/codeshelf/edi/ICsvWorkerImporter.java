@@ -16,6 +16,13 @@ import com.codeshelf.model.domain.Facility;
  */
 public interface ICsvWorkerImporter {
 
-	boolean importWorkersFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
+	/**
+	 * Import workers from file.
+	 * @param inCsvStreamReader
+	 * @param inFacility
+	 * @param inAppend - if false, all existing workers not mentioned in this import will be deactivated
+	 * @param inProcessTime
+	 */
+	boolean importWorkersFromCsvStream(Reader inCsvStreamReader, Facility inFacility, boolean inAppend, Timestamp inProcessTime);
 
 }

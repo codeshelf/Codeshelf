@@ -1,7 +1,7 @@
 // This script sets up facility, and demonstrates various CHE workflows
 
 var :site		5000
-var :channel	8
+var :channel	11
 var :che1 		0x0000009B
 var :che2 		0x000000ED
 var :chePall	0x0000009D
