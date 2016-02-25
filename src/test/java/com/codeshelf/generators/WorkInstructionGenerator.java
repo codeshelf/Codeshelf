@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
@@ -33,7 +35,8 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.google.common.collect.ImmutableList;
 
 public class WorkInstructionGenerator {
-
+	private static final Logger	LOGGER				= LoggerFactory.getLogger(WorkInstructionGenerator.class);
+	
 	private InventoryGenerator inventoryGenerator = new InventoryGenerator(null);
 	private Generator generator = new Generator();
 	
@@ -142,6 +145,9 @@ public class WorkInstructionGenerator {
 				firstChe = che;
 				break;
 			}
+		}
+		if (firstChe == null) {
+			LOGGER.error("Current facility had no ches when requested. This process will likely fail.");
 		}
 		return firstChe;
 	}

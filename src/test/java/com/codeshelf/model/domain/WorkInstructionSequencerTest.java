@@ -8,7 +8,6 @@ package com.codeshelf.model.domain;
 import java.io.IOException;
 import java.util.List;
 
-import org.hibernate.envers.internal.reader.FirstLevelCache;
 import org.junit.Assert;
 import org.junit.Test;
 
