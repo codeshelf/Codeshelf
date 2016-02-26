@@ -43,7 +43,6 @@ public class CheProcessPickShorts extends ServerTest {
 
 	}
 
-
 	@Test
 	public final void fullAndPartialShorts() throws IOException {
 		Facility facility = setUpSimpleNoSlotFacility();
@@ -87,6 +86,7 @@ public class CheProcessPickShorts extends ServerTest {
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker.logLastCheDisplay();
+		picker.logCheDisplay();
 		picker.scanLocation("D403");
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		picker.logLastCheDisplay();
@@ -296,7 +296,7 @@ public class CheProcessPickShorts extends ServerTest {
 		commitTransaction();
 
 		this.startSiteController();
-		
+
 		beginTransaction();
 		facility = facility.reload();
 
@@ -443,7 +443,7 @@ public class CheProcessPickShorts extends ServerTest {
 		commitTransaction();
 
 		this.startSiteController();
-		
+
 		beginTransaction();
 		facility = facility.reload();
 

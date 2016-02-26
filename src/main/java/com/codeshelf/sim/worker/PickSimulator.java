@@ -585,7 +585,6 @@ public class PickSimulator {
 		return deviceToAsk.getRecentCheDisplayString(lineIndex);
 	}
 
-	/*Will rename, and perhaps retire this*/
 	public void logCheDisplay() {
 		// each line below may get the linked screen line. So the effect is logging the linked screen. 
 		// No need for another getDeviceToAsk() call.

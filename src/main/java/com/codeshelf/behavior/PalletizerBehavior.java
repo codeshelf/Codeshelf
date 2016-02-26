@@ -258,7 +258,9 @@ public class PalletizerBehavior implements IApiBehavior{
 				detail.setStatus(OrderStatusEnum.COMPLETE);
 				OrderDetail.staticGetDao().store(detail);
 				for (WorkInstruction wi : detail.getWorkInstructions()){
-					completeWi(wi, false);
+					if (wi.getStatus() != WorkInstructionStatusEnum.COMPLETE){
+						completeWi(wi, false);
+					}
 					if (license != null) {
 						wi.setContainerId(license);
 					}
