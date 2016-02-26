@@ -35,6 +35,7 @@ import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
+import com.codeshelf.util.ThreadUtils;
 
 public class CheProcessPalletizer extends ServerTest{
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessPalletizer.class);
@@ -226,7 +227,7 @@ public class CheProcessPalletizer extends ServerTest{
 		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
 		Assert.assertEquals("Slot1111\nItem: 10010003\nStore: 1001\nScan Next Item\n", picker.getLastCheDisplay());
 	}
-	
+		
 	@Test
 	public void testCloseByLocation(){
 		LOGGER.info("1: Open a pallet");
@@ -249,6 +250,34 @@ public class CheProcessPalletizer extends ServerTest{
 		LOGGER.info("4: Place item at the same location");
 		picker.scanLocation("Slot1111");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+	}
+	
+	@Test
+	public void testCompleteEvents() {
+		LOGGER.info("1: Open a pallet");
+		openNewPallet("10010001", "L%Slot1111", "Slot1111");
+		LOGGER.info("1b: Add two more cartons");
+		picker.scanSomething("10010002");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+		picker.scanSomething("10010003");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+		
+		LOGGER.info("2: Close pallet");
+		picker.scanCommand("REMOVE");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
+		picker.scanSomething("10019991");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
+		
+		ThreadUtils.sleep(500);
+		
+		LOGGER.info("3: Make sure that only 3 COMPLETE events were created");
+		beginTransaction();
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("eventType", EventType.COMPLETE));
+		filterParams.add(Restrictions.eq("parent", getFacility()));
+		List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
+		Assert.assertEquals(3, events.size());
+		commitTransaction();
 	}
 	
 	@Test

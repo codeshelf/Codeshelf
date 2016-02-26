@@ -236,15 +236,20 @@ public class PalletizerBehavior implements IApiBehavior{
 	private void deactivateAndIlluminateOrders(Che che, List<OrderLocation> orderLocations, String license) {
 		List<Location> locations = Lists.newArrayList();
 		for (OrderLocation orderLocation : orderLocations) {
-			locations.add(orderLocation.getLocation());
 			OrderHeader order = orderLocation.getParent();
+			if (order.getStatus() == OrderStatusEnum.COMPLETE){
+				continue;
+			}
+			locations.add(orderLocation.getLocation());
 			order.setStatus(OrderStatusEnum.COMPLETE);
 			List<OrderDetail> details = order.getOrderDetails();
 			for (OrderDetail detail : details) {
 				detail.setStatus(OrderStatusEnum.COMPLETE);
 				OrderDetail.staticGetDao().store(detail);
 				for (WorkInstruction wi : detail.getWorkInstructions()){
-					completeWi(wi.getPersistentId(), false);
+					if (wi.getStatus() != WorkInstructionStatusEnum.COMPLETE){
+						completeWi(wi.getPersistentId(), false);
+					}
 					if (license != null) {
 						wi.setContainerId(license);
 					}
