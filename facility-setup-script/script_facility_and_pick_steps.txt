@@ -22,7 +22,7 @@ STEP This step sets up facility
 SERVER
 editFacility F1 :site :channel
 createDummyOutline 1
-setProperty scanpick UPC
+setProperty scanpick Disabled
 setProperty invtmenu true
 setProperty pickmult true
 sftp Orders	:sftphost 22 :sftpuser :sftppass in/ilya out/ilya/archive
