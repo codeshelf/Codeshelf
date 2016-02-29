@@ -92,6 +92,8 @@ public class OutboundOrderBatchProcessor implements Runnable {
 	int													maxProcessingAttempts	= 10;
 
 	Map<String, Boolean>								orderChangeMap;
+	
+	private HashMap<String, UomMaster>					uomMasterHash			= new HashMap<>();
 
 	public OutboundOrderBatchProcessor(int procId,
 		OutboundOrderPrefetchCsvImporter importer,
@@ -804,9 +806,12 @@ public class OutboundOrderBatchProcessor implements Runnable {
 	 * this means that is "each" is the first kind of ea found, it the master.
 	 */
 	private UomMaster updateUomMaster(final String inUomId, final Facility inFacility) {
-		UomMaster result = null;
-
-		result = inFacility.getNormalizedUomMaster(inUomId);
+		String hashKey = facility.getPersistentId() + "-" + inUomId;
+		UomMaster result = uomMasterHash.get(hashKey);
+		if (result == null){
+			result = inFacility.getNormalizedUomMaster(inUomId);
+			uomMasterHash.put(hashKey, result);
+		}
 		if (result == null) {
 			result = new UomMaster();
 			result.setUomMasterId(inUomId);
