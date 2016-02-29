@@ -445,7 +445,7 @@ public class ScriptSiteRunner {
 	 * @throws Exception 
 	 */
 	private void processLogoutCommand(String parts[]) throws Exception {
-		if (parts.length < 2){
+		if (parts.length < 1){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_LOGOUT);
 		}
 		if (parts.length == 1){
