@@ -250,4 +250,4 @@ setupCart CHE77 26717436 26717437 26717438 26717439 26717440 26717441 26717442 2
 */
 setupMany stop
 setParams pickSpeed=0.7
-//pickAll
+pickAll
