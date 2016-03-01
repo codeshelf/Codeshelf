@@ -43,6 +43,7 @@ public class DeleteBroadcastListener implements PostCommitDeleteEventListener {
 				IDomainObjectTree<? extends IDomainObject> childObject = (IDomainObjectTree<? extends IDomainObject>) entity;
 				IDomainObject parent = childObject.getParent();
 				if(parent != null) {
+					parent = TenantPersistenceService.deproxify(parent);
 					parentClass = parent.getClass();
 					parentId = childObject.getParentPersistentId();
 				}
