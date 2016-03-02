@@ -51,8 +51,8 @@ public class CheResource {
 	private NotificationBehavior notificationBehavior;
 	
 	@Inject
-	public CheResource(WorkBehavior workService, NotificationBehavior notificationBehavior) {
-		this.workBehavior = workService;
+	public CheResource(WorkBehavior workBehavior, NotificationBehavior notificationBehavior) {
+		this.workBehavior = workBehavior;
 		this.notificationBehavior = notificationBehavior;
 	}
 	

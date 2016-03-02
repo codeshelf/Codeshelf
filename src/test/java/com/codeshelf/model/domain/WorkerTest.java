@@ -268,7 +268,7 @@ public class WorkerTest extends HibernateTest {
 	}
 	
 	private WorkerResource getWorkerResource(Worker worker) throws Exception {
-		WorkerResource workerResource = new WorkerResource(new NotificationBehavior());
+		WorkerResource workerResource = new WorkerResource(null, new NotificationBehavior());
 		workerResource.setWorker(worker);
 		return workerResource;
 	}
