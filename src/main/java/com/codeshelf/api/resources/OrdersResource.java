@@ -1,6 +1,9 @@
 package com.codeshelf.api.resources;
 
+import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -12,9 +15,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +37,7 @@ import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.dao.ResultDisplay;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderHeader;
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
@@ -45,10 +53,13 @@ public class OrdersResource {
 	private Facility facility;
 
 	private NotificationBehavior notificationBehavior;
+
+	private PrintBehavior printBehavior;
 	
 	@Inject 
-	public OrdersResource(OrderBehavior orderService, NotificationBehavior notificationBehavior) {
+	public OrdersResource(OrderBehavior orderService, PrintBehavior printBehavior, NotificationBehavior notificationBehavior) {
 		this.orderService = orderService;
+		this.printBehavior = printBehavior;
 		this.notificationBehavior = notificationBehavior;
 	}
 
@@ -111,17 +122,35 @@ public class OrdersResource {
 	}
 
 	@POST
-	@Path("/{orderId}/details/print")
-	@Produces("application/pdf")
-	public Response getOrderDetailsReport(@PathParam("orderId") String orderDomainId, String script) throws JRException, ScriptException {
+	@Path("/{orderId}/print/preview")
+	public Response getOrderDetailsReport(@Context UriInfo uriInfo, @PathParam("orderId") String orderDomainId, String script) throws ScriptException, IOException {
 		OrderHeader orderHeader = OrderHeader.staticGetDao().findByDomainId(facility,  orderDomainId);
-		List<OrderDetailView> results = this.orderService.getOrderDetailsForOrderId(facility, orderDomainId);
-		StreamingOutput out = new PrintBehavior().printOrder(script, orderHeader, results);
-		return Response.ok(out, "application/pdf").build();
-	}
-	
+		List<OrderDetailView> orderDetails = this.orderService.getOrderDetailsForOrderId(facility, orderDomainId);
+		String token = printBehavior.printOrder(script, orderHeader, orderDetails);
 
-	
+		LinkedList<String> matchedUris = new LinkedList<>(uriInfo.getMatchedURIs());
+		UriBuilder baseUriBuilder = uriInfo.getBaseUriBuilder();
+		//for (String matchedUri : matchedUris) {
+		//	baseUriBuilder.path(matchedUri);
+		//}
+		matchedUris.removeFirst();
+		baseUriBuilder.path(matchedUris.getFirst());
+		URI newLocation = baseUriBuilder.path(OrdersResource.class, "getPreview").build(orderDomainId, token);
+		return Response.created(newLocation).build();
+	}
+
+	@GET
+	@Path("/{orderId}/print/preview/{token}")
+	@Produces("application/pdf")
+	public Response getPreview(@PathParam("orderId") String orderDomainId, @PathParam("token") String token) throws ScriptException, IOException {
+		Optional<byte[]> report = printBehavior.getReport(token);
+		if (report.isPresent()) {
+			return Response.ok(report.get()).header("Content-Disposition", "attachment; filename=" + orderDomainId + ".pdf").build();
+		} else {
+			return Response.status(Status.NOT_FOUND).build();
+		}
+	}
+
 	@GET
 	@Path("/{orderId}/events")
 	@Produces(MediaType.APPLICATION_JSON)

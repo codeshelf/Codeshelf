@@ -2,37 +2,46 @@ package com.codeshelf.behavior;
 
 import static net.sf.dynamicreports.report.builder.DynamicReports.report;
 
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.StreamingOutput;
-
-
 
 import com.codeshelf.behavior.OrderBehavior.OrderDetailView;
 import com.codeshelf.model.domain.OrderHeader;
+import com.google.common.base.Optional;
+import com.google.common.cache.Cache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.inject.Inject;
 
 import net.sf.dynamicreports.jasper.builder.JasperReportBuilder;
 import net.sf.dynamicreports.report.exception.DRException;
-import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 
 public class PrintBehavior {
+	
+	private Cache<String, byte[]> cache;
 
-	public StreamingOutput printOrder(String script, OrderHeader orderHeader, List<OrderDetailView> details) throws JRException, ScriptException {
+	@Inject
+	public PrintBehavior(Cache<String, byte[]> cache) {
+		this.cache = cache;
+	}
+
+	public String printOrder(String script, OrderHeader orderHeader, List<OrderDetailView> details) throws IOException, ScriptException {
 		JasperReportBuilder reportBuilder  = eval(script);
-		 StreamingOutput out = doReport(reportBuilder, details, "test");
-		 return out;
+		 String token = doReport(reportBuilder, details, "test");
+		 return token;
+	}
+	
+	public Optional<byte[]> getReport(String token) {
+		return Optional.fromNullable(cache.getIfPresent(token));
 	}
 	
 	private JasperReportBuilder  eval(String script) throws ScriptException {
@@ -43,21 +52,19 @@ public class PrintBehavior {
 		return reportBuilder;
 	}
 	
-	private StreamingOutput doReport(final JasperReportBuilder inReport, final Collection<?> inData, String name) throws JRException {
+	private String doReport(final JasperReportBuilder inReport, final Collection<?> inData, String name) throws IOException {
 		JRBeanCollectionDataSource source = new JRBeanCollectionDataSource(inData);
-		return new StreamingOutput() {
-			@Override
-			public void write(OutputStream output) throws IOException, WebApplicationException {
-				try {
-					
-					inReport.setDataSource(source);
-					inReport.toPdf(new FileOutputStream("/tmp/tmpA.pdf"));
-				} catch (DRException e) {
-					throw new WebApplicationException(e);
-				}
-				output.close();
-			}
-		};
+		inReport.setDataSource(source);
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		try {
+			inReport.toPdf(out);
+			out.close();
+			String token = UUID.randomUUID().toString();
+			cache.put(token, out.toByteArray());
+			return token;
+		} catch (DRException e) {
+			throw new IOException(e);
+		}
 	}
 }
 /*
