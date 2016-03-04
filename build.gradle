@@ -39,7 +39,8 @@ repositories {
 	mavenCentral()
 	maven { url "http://iron-io.github.io/maven/repository" }
   maven { url "http://maven.restlet.com" } 
-    //    maven { url "https://clojars.org/repo" }
+  maven { url "http://jasperreports.sourceforge.net/maven2" }
+  //    maven { url "https://clojars.org/repo" }
 
 }
 
@@ -137,6 +138,10 @@ dependencies {
 
 			'org.quartz-scheduler:quartz:2.2.1',
       'org.jminix:jminix:1.2.0',
+      'net.sourceforge.dynamicreports:dynamicreports-core:4.1.0',
+      'org.apache.xmlgraphics:batik-bridge:1.7', //barcode
+      'org.apache.xmlgraphics:batik-dom:1.7',
+      'org.apache.xmlgraphics:batik-svg-dom:1.7',
 
       // manually update
 			files('lib/dist/classindex-3.3.jar'), // needs to be in fixed location for eclipse annotation processing
