@@ -301,6 +301,14 @@ public class RadioControllerPacketSchedulerService {
 			addDeviceToQueue(mDeviceQueue, device);
 		}
 	}
+	
+	private int countRemainingPackets(){
+		int size = 0;
+		for (ConcurrentLinkedDeque<IPacket> devicePackets : mPendingPacketsMap.values()){
+			size += devicePackets.size();
+		}
+		return size;
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -320,7 +328,7 @@ public class RadioControllerPacketSchedulerService {
 		while (!devicePacketdeque.isEmpty()) {
 
 			packet = devicePacketdeque.peek();
-
+			
 			if (clearToSendCommandPacket(packet, inDevice)) {
 
 				// Remove packet from queue if it does not require an ack

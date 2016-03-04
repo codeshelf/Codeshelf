@@ -1,3 +1,4 @@
 STEP
 SERVER
-importOrdersWithDeletion orders_wally_80
+importOrdersWithDeletion orders_wally_40
+importOrdersWithDeletion orders_wally_80_p2
