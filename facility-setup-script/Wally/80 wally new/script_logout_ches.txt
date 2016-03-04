@@ -1,0 +1,89 @@
+var :che1	0x000002F0
+var :che2	0x0000029E
+var :che3	0x000001DC
+var :che4	0x00000237
+var :che5	0x00000239
+var :che6	0x00000297
+var :che7	0x000002CA
+var :che8	0x00000246
+var :che9	0x00000243
+var :che10	0x000002C8
+var :che11	0x0000026E
+var :che12	0x00000245
+var :che13	0x000002E1
+var :che14	0x00000190
+var :che15	0x000002A4
+var :che16	0x0000018D
+var :che17	0x000002D4
+var :che18	0x000002CB
+var :che19	0x000002B2
+var :che20	0x00000163
+var :che21	0x00000162
+var :che22	0x000002CF
+var :che23	0x000002D7
+var :che24	0x000002B1
+var :che25	0x00000235
+var :che26	0x00000244
+var :che27	0x000002F5
+var :che28	0x00000252
+var :che29	0x00000192
+var :che30	0x00000256
+var :che31	0x000002ED
+var :che32	0x00000255
+var :che33	0x000002B9
+var :che34	0x00000298
+var :che35	0x0000024F
+var :che36	0x0000024B
+var :che37	0x00000248
+var :che38	0x00000188
+var :che39	0x000002B8
+var :che40	0x000002D8
+var :che41	0x000002F2
+var :che42	0x00000186
+var :che43	0x000002E9
+var :che44	0x00000247
+var :che45	0x0000024E
+var :che46	0x00000184
+var :che47	0x000002E0
+var :che48	0x00000293
+var :che49	0x000001DA
+var :che50	0x000002DA
+var :che51	0x000002B7
+var :che52	0x0000024C
+var :che53	0x000002A0
+var :che54	0x000002E5
+var :che55	0x00000249
+var :che56	0x00000250
+var :che57	0x0000015F
+var :che58	0x000002AA
+var :che59	0x000002E2
+var :che60	0x0000029B
+var :che61	0x00000275
+var :che62	0x00000196
+var :che63	0x000002F1
+var :che64	0x00000236
+var :che65	0x0000024D
+var :che66	0x00000251
+var :che67	0x00000257
+var :che68	0x000002BC
+var :che69	0x000002C2
+var :che70	0x00000161
+var :che71	0x000002C9
+var :che72	0x000002D2
+var :che73	0x00000130
+var :che74	0x0000018F
+var :che75	0x000001D2
+var :che76	0x00000154
+var :che77	0x000002BF
+
+STEP
+SITE
+defChe CHE1  :che1  CHE2  :che2  CHE3  :che3  CHE4  :che4  CHE5  :che5  CHE6  :che6  CHE7  :che7  CHE8  :che8  CHE9  :che9  CHE10 :che10
+defChe CHE11 :che11 CHE12 :che12 CHE13 :che13 CHE14 :che14 CHE15 :che15 CHE16 :che16 CHE17 :che17 CHE18 :che18 CHE19 :che19 CHE20 :che20
+defChe CHE21 :che21 CHE22 :che22 CHE23 :che23 CHE24 :che24 CHE25 :che25 CHE26 :che26 CHE27 :che27 CHE28 :che28 CHE29 :che29 CHE30 :che30
+defChe CHE31 :che31 CHE32 :che32 CHE33 :che33 CHE34 :che34 CHE35 :che35 CHE36 :che36 CHE37 :che37 CHE38 :che38 CHE39 :che39 CHE40 :che40
+defChe CHE41 :che41 CHE42 :che42 CHE43 :che43 CHE44 :che44 CHE45 :che45 CHE46 :che46 CHE47 :che47 CHE48 :che48 CHE49 :che49 CHE50 :che50
+defChe CHE51 :che51 CHE52 :che52 CHE53 :che53 CHE54 :che54 CHE55 :che55 CHE56 :che56 CHE57 :che57 CHE58 :che58 CHE59 :che59 CHE60 :che60
+defChe CHE61 :che61 CHE62 :che62 CHE63 :che63 CHE64 :che64 CHE65 :che65 CHE66 :che66 CHE67 :che67 CHE68 :che68 CHE69 :che69 CHE70 :che70
+defChe CHE71 :che71 CHE72 :che72 CHE73 :che73 CHE74 :che74 CHE75 :che75 CHE76 :che76 CHE77 :che77
+logout
