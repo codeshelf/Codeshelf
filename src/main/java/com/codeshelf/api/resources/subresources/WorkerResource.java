@@ -1,5 +1,7 @@
 package com.codeshelf.api.resources.subresources;
 
+import java.util.List;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -18,8 +20,11 @@ import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.resources.EventsResource;
 import com.codeshelf.behavior.NotificationBehavior;
+import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.behavior.NotificationBehavior.HistogramParams;
 import com.codeshelf.behavior.NotificationBehavior.HistogramResult;
+import com.codeshelf.model.dao.ResultDisplay;
+import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
@@ -33,10 +38,13 @@ public class WorkerResource {
 	
 	@Setter
 	private Worker worker;
+
+	private WorkBehavior workBehavior;
 	private NotificationBehavior notificationBehavior;
 	
 	@Inject
-	public WorkerResource(NotificationBehavior notificationBehavior) {
+	public WorkerResource(WorkBehavior workBehavior, NotificationBehavior notificationBehavior) {
+		this.workBehavior = workBehavior;
 		this.notificationBehavior = notificationBehavior;
 	}
 	
@@ -87,6 +95,20 @@ public class WorkerResource {
 		}
 	}
 
+	@GET
+	@Path("/workinstructions")
+	@RequiresPermissions("che:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getWorkInstructions() {
+		ErrorResponse errors = new ErrorResponse();
+
+		try {
+			List<WorkInstruction> workInstructions = workBehavior.getWorkInstructions(worker);
+			return BaseResponse.buildResponse(new ResultDisplay<WorkInstruction>(workInstructions));
+		} catch (Exception e) {
+			return errors.processException(e);
+		} 
+	}
 	
 	@Path("/events")
 	public EventsResource getEvents() {
