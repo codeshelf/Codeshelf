@@ -1,5 +1,6 @@
 package com.codeshelf.api.resources.subresources;
 
+import java.util.List;
 import java.util.UUID;
 
 import javax.websocket.server.PathParam;
@@ -27,6 +28,7 @@ import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.behavior.NotificationBehavior.HistogramParams;
 import com.codeshelf.behavior.NotificationBehavior.HistogramResult;
 import com.codeshelf.behavior.WorkBehavior;
+import com.codeshelf.model.dao.ResultDisplay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
@@ -49,8 +51,8 @@ public class CheResource {
 	private NotificationBehavior notificationBehavior;
 	
 	@Inject
-	public CheResource(WorkBehavior workService, NotificationBehavior notificationBehavior) {
-		this.workBehavior = workService;
+	public CheResource(WorkBehavior workBehavior, NotificationBehavior notificationBehavior) {
+		this.workBehavior = workBehavior;
 		this.notificationBehavior = notificationBehavior;
 	}
 	
@@ -105,7 +107,7 @@ public class CheResource {
 	@Path("/workinstructions/complete")
 	@RequiresPermissions("che:simulate")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response computeWorkInstructions(@FormParam("wiPersistentId") UUIDParam wiPersistentId, @FormParam("workerBadgeId") String workerBadgeId) {
+	public Response completeWorkinstruction(@FormParam("wiPersistentId") UUIDParam wiPersistentId, @FormParam("workerBadgeId") String workerBadgeId) {
 		ErrorResponse errors = new ErrorResponse();
 
 		try {
@@ -118,6 +120,22 @@ public class CheResource {
 			return errors.processException(e);
 		} 
 	}
+	
+	@GET
+	@Path("/workinstructions")
+	@RequiresPermissions("che:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getWorkInstructions() {
+		ErrorResponse errors = new ErrorResponse();
+
+		try {
+			List<WorkInstruction> workInstructions = workBehavior.getWorkInstructions(che, null);
+			return BaseResponse.buildResponse(new ResultDisplay<WorkInstruction>(workInstructions));
+		} catch (Exception e) {
+			return errors.processException(e);
+		} 
+	}
+	
 	
 	
 	@POST

@@ -25,6 +25,7 @@ import lombok.ToString;
 import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
@@ -1283,6 +1284,32 @@ public class WorkBehavior implements IApiBehavior {
 		return getWorkInstructions(inChe, inScannedLocationId, false, new AtomicBoolean(false));
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Returns the work instructions if last login/logout event was a login to a cart
+	 * @param inWorker
+	 * @return
+	 */
+	public List<WorkInstruction> getWorkInstructions(Worker worker) {
+		@SuppressWarnings("unchecked")
+		List<WorkerEvent> filterWiList = WorkerEvent.staticGetDao().createCriteria()
+			.add(Restrictions.eq("workerId", worker.getDomainId()))
+			.add(Restrictions.in("eventType", ImmutableList.of(EventType.LOGIN, EventType.LOGOUT)))
+			.addOrder(Order.desc("created"))
+			.setMaxResults(1)
+			.list(); // empty .in() guard not needed here
+		if(filterWiList.size() >= 1) {
+			WorkerEvent event = filterWiList.get(0);
+			
+			Che che = Che.staticGetDao().findByPersistentId(event.getDevicePersistentId());
+			return getWorkInstructions(che, null); 
+		} else {
+			return Collections.emptyList();
+		}
+	}
+
+
+	
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe,
 		final String inScannedLocationId,
 		final Boolean reversePickOrder,
@@ -1980,7 +2007,7 @@ public class WorkBehavior implements IApiBehavior {
 		}
 		return startingPathPos;
 	}
-
+	
 	/**
 	 * Helper function used in the context after scan location. Assumes computeWorkinstructions was already done.
 	 * @param inChe
