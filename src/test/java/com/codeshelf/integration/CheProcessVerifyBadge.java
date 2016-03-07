@@ -3,6 +3,8 @@ package com.codeshelf.integration;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
@@ -21,6 +23,7 @@ import com.codeshelf.testframework.ServerTest;
 
 public class CheProcessVerifyBadge extends ServerTest {
 	private static final int	WAIT_TIME	= 4000;
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessVerifyBadge.class);
 
 	private final static String WORKER1 = "Worker1", WORKER2 = "Worker2";
 	
@@ -105,6 +108,59 @@ public class CheProcessVerifyBadge extends ServerTest {
 		picker2.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 		Assert.assertEquals("UNKNOWN BADGE", picker2.getLastCheDisplayString(1));
 
+	}
+
+	/**
+	 * For DEV-1426.  Show no badge authorization log in for non- U%, and show that ANSI-1252 prefix does not give an automatic loging
+	 */
+	@Test
+	public void testNoAuthDongleEncoding(){
+		String worker2 = "JOE123";
+		String ansi1252prefix = "\\000023";
+		String worker3 = "MARY51";
+	init(false);
+		
+		this.startSiteController();
+		
+		PickSimulator picker1 = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");		
+		LOGGER.info("1: Log in a worker as we normally do ");
+		picker1.loginAndSetup(WORKER1);
+		
+		// CHE 2 is set to line scan process
+		PickSimulator picker2 = waitAndGetPickerForProcessType(this, cheGuid2, "CHE_LINESCAN");		
+		LOGGER.info("2: Log in a worker using a customer badge that does not have a U%");
+		picker2.scanSomething(worker2);
+		picker2.waitForCheState(CheStateEnum.READY, WAIT_TIME); 
+
+		PickSimulator picker3 = waitAndGetPickerForProcessType(this, cheGuid3, "CHE_SETUPORDERS");		
+		LOGGER.info("3: If the worker just linked CodeCorps scanner to a dongle, this prefix comes through.");
+		picker3.scanSomething(ansi1252prefix);
+		picker3.waitInSameState(CheStateEnum.IDLE, WAIT_TIME);
+				
+		LOGGER.info("3b: cannot happen. Introduce a null string scanned");
+		picker3.scanSomething(null);
+		picker3.waitInSameState(CheStateEnum.IDLE, WAIT_TIME);
+
+		picker3.scanSomething(worker3);
+		picker3.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME); // line scan has different process
+
+		//Verify created workers
+		this.getTenantPersistenceService().beginTransaction();
+
+		Worker createdWorker1 = Worker.findWorker(getFacility(), WORKER1);
+		verifyWorker(createdWorker1, getFacility(), WORKER1, WORKER1);
+		
+		Worker createdWorker2 = Worker.findWorker(getFacility(), worker2);
+		verifyWorker(createdWorker2, getFacility(), worker2, worker2);
+
+		LOGGER.info("3c: Showing that we ate the prefix");
+		Worker createdWorker3a = Worker.findWorker(getFacility(), ansi1252prefix);
+		Assert.assertNull(createdWorker3a);
+	
+		Worker createdWorker3b = Worker.findWorker(getFacility(), worker3);
+		verifyWorker(createdWorker3b, getFacility(), worker3, worker3);
+
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
