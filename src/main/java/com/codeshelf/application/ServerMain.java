@@ -6,6 +6,8 @@ CodeshelfWebSocketServer *  CodeShelf
 
 package com.codeshelf.application;
 
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.apache.shiro.guice.aop.ShiroAopModule;
 import org.apache.shiro.mgt.SecurityManager;
@@ -14,6 +16,7 @@ import org.quartz.spi.JobFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PrintBehavior;
 import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.CrossBatchCsvImporter;
@@ -49,9 +52,12 @@ import com.codeshelf.ws.server.CsServerEndPoint;
 import com.codeshelf.ws.server.ServerMessageProcessor;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.servlet.GuiceFilter;
@@ -151,6 +157,7 @@ public final class ServerMain {
 				bind(IMessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
 				
 				bind(ConvertUtilsBean.class).toProvider(ConverterProvider.class);
+
 				
 				// Shiro modules
 				bind(SecurityManager.class).to(CodeshelfSecurityManager.class);
@@ -170,6 +177,15 @@ public final class ServerMain {
 				
 				requestStaticInjection(EdiExportService.class);
 				bind(EdiExportService.class).in(Singleton.class);
+			}
+			
+			@Singleton
+			@Provides
+			public PrintBehavior providePrintBehavior() {
+				Cache<String, byte[]> printDocumentCache =  CacheBuilder.newBuilder()
+						.expireAfterWrite(1, TimeUnit.MINUTES)
+						.build();
+				return new PrintBehavior(printDocumentCache);
 			}
 					
 		}, 

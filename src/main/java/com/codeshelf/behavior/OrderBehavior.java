@@ -88,10 +88,6 @@ public class OrderBehavior implements IApiBehavior {
 			status = statusEnum;
 		}
 
-		public void setStatusString(String statusString) {
-			status = OrderStatusEnum.valueOf(statusString);
-		}
-
 		public String getGtin() {
 			//TODO hopefully fast enough
 			@SuppressWarnings("unchecked")

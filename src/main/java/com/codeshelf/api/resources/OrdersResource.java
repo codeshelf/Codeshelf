@@ -1,17 +1,27 @@
 package com.codeshelf.api.resources;
 
+import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.script.ScriptException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,13 +32,17 @@ import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.OrderBehavior.OrderDetailView;
+import com.codeshelf.behavior.PrintBehavior;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.dao.ResultDisplay;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.OrderHeader;
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
 import lombok.Setter;
+import net.sf.jasperreports.engine.JRException;
 
 public class OrdersResource {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrdersResource.class);
@@ -39,10 +53,13 @@ public class OrdersResource {
 	private Facility facility;
 
 	private NotificationBehavior notificationBehavior;
+
+	private PrintBehavior printBehavior;
 	
 	@Inject 
-	public OrdersResource(OrderBehavior orderService, NotificationBehavior notificationBehavior) {
+	public OrdersResource(OrderBehavior orderService, PrintBehavior printBehavior, NotificationBehavior notificationBehavior) {
 		this.orderService = orderService;
+		this.printBehavior = printBehavior;
 		this.notificationBehavior = notificationBehavior;
 	}
 
@@ -96,13 +113,42 @@ public class OrdersResource {
 		}
 	}
 	
-	
 	@GET
 	@Path("/{orderId}/details")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getOrders(@PathParam("orderId") String orderDomainId) {
+	public Response getOrderDetails(@PathParam("orderId") String orderDomainId) {
 		List<OrderDetailView> results = this.orderService.getOrderDetailsForOrderId(facility, orderDomainId);
 		return BaseResponse.buildResponse(results);
+	}
+
+	@POST
+	@Path("/{orderId}/print/preview")
+	public Response getOrderDetailsReport(@Context UriInfo uriInfo, @PathParam("orderId") String orderDomainId, String script) throws ScriptException, IOException {
+		OrderHeader orderHeader = OrderHeader.staticGetDao().findByDomainId(facility,  orderDomainId);
+		List<OrderDetailView> orderDetails = this.orderService.getOrderDetailsForOrderId(facility, orderDomainId);
+		String token = printBehavior.printOrder(script, orderHeader, orderDetails);
+
+		LinkedList<String> matchedUris = new LinkedList<>(uriInfo.getMatchedURIs());
+		UriBuilder baseUriBuilder = uriInfo.getBaseUriBuilder();
+		//for (String matchedUri : matchedUris) {
+		//	baseUriBuilder.path(matchedUri);
+		//}
+		matchedUris.removeFirst();
+		baseUriBuilder.path(matchedUris.getFirst());
+		URI newLocation = baseUriBuilder.path(OrdersResource.class, "getPreview").build(orderDomainId, token);
+		return Response.created(newLocation).build();
+	}
+
+	@GET
+	@Path("/{orderId}/print/preview/{token}")
+	@Produces("application/pdf")
+	public Response getPreview(@PathParam("orderId") String orderDomainId, @PathParam("token") String token) throws ScriptException, IOException {
+		Optional<byte[]> report = printBehavior.getReport(token);
+		if (report.isPresent()) {
+			return Response.ok(report.get()).header("Content-Disposition", "attachment; filename=" + orderDomainId + ".pdf").build();
+		} else {
+			return Response.status(Status.NOT_FOUND).build();
+		}
 	}
 
 	@GET
