@@ -344,6 +344,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		picker1.scanSomething("1515");
 		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
 		// P14 is at poscon index 4. Count should be 3. No flashing
+		posman.waitForControllerDisplayValue((byte) 4, (byte) 3, WAIT_TIME);
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
 		Byte flashValue = posman.getLastSentPositionControllerDisplayFreq((byte) 4);
 		Byte minValue = posman.getLastSentPositionControllerMinQty((byte) 4);
