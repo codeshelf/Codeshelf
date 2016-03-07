@@ -26,6 +26,7 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
+import com.codeshelf.model.domain.Che;
 
 /**
  * @author jeffw
@@ -222,8 +223,13 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	}
 
 	// --------------------------------------------------------------------------
-	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] associatedToCheGuid) {
+	@Override
+	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, Che che) {
 		return false;
+	}
+	
+	@Override
+	public void updateCheDetails(NetGuid cheDeviceGuid, Che che) {
 	}
 
 	// --------------------------------------------------------------------------

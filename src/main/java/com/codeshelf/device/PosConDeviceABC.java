@@ -371,11 +371,11 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		}
 	}
 
-	protected void notifyButton(int buttonNum, int showingQuantity) {
+	protected void notifyButton(int buttonNum, Integer showingQuantity) {
 		try {
 			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_WORKER_KEY, getUserId());
 			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, ContextLogging.TAG_CHE_BUTTON);
-			if (showingQuantity >= 0) {
+			if (showingQuantity != null && showingQuantity >= 0) {
 				String forContainer = getButtonPurpose(buttonNum);
 				String reasonBadButtonPress = tellIfNotLegitimateButtonPress(buttonNum, showingQuantity);
 				if (!reasonBadButtonPress.isEmpty()) {

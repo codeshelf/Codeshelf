@@ -19,7 +19,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
@@ -42,7 +41,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
 import lombok.Setter;
-import net.sf.jasperreports.engine.JRException;
 
 public class OrdersResource {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrdersResource.class);

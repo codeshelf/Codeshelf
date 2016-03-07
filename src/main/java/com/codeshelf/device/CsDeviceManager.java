@@ -861,8 +861,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 				// TODO! Update scanner type on the fly!
 				//TODO if associated to che guid does not match what we have, we need to have the device align itself.
-			} else if (che != null && netDevice.needUpdateCheDetails(deviceGuid, che.getDomainId(), che.getAssociateToCheGuid())) {
-				LOGGER.debug("No update to. deviceType={}; guid={};", deviceType, deviceGuid);
+			} else if (che != null && netDevice.needUpdateCheDetails(deviceGuid, che)) {
+				LOGGER.debug("Update deviceType={}; guid={};", deviceType, deviceGuid);
+				netDevice.updateCheDetails(deviceGuid, che);
 				suppressMapUpdate = true; // did the update within the existing map. No change to the TwoKeyMap
 			} else {
 				// if not changing netGuid, there is nothing to change

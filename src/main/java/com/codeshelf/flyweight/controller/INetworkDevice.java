@@ -12,6 +12,7 @@ import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.domain.Che;
 
 // --------------------------------------------------------------------------
 /**
@@ -163,7 +164,9 @@ public interface INetworkDevice {
 
 	public void setFirmwareVersion(byte[] firmwareVersion);
 
-	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] associatedToCheGuid);
+	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, Che che);
+	
+	public void updateCheDetails(NetGuid cheDeviceGuid, Che che);
 	
 	/**
 	 * getLastPacketReceivedTime();

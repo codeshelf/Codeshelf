@@ -2067,11 +2067,24 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * Implement some or most of the remote business at CheDeviceLogic level so that future CHE applications can automatically remote.
 	 */
 	@Override
-	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] linkedToCheGuid) {
-		// TODO update internals
-
+	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, Che che) {
+		//TODO add more items to compare
+		if (getCheLightingEnum() != che.getCheLighting()){
+			return true;
+		}
+		if (getScannerTypeEnum() != che.getScannerType()){
+			return true;
+		}
 		return false;
 	}
+	
+	@Override
+	public void updateCheDetails(NetGuid cheDeviceGuid, Che che) {
+		//TODO add more items to update
+		setCheLightingEnum(che.getCheLighting());
+		setScannerTypeEnum(che.getScannerType());
+	}
+
 	
 	// --------------------------------------------------------------------------
 	/**
