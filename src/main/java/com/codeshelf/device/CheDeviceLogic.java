@@ -1075,6 +1075,20 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	@Override
 	public void scanCommandReceived(String inCommandStr) {
+		
+		if (inCommandStr == null){
+			LOGGER.error("null scan string. How? Not a throw, just logging the stack trace.", new RuntimeException());
+			return;
+		}
+		
+		final String ansi1251prefix = "\\000023";
+		// DEV-1426. If the scanned string exactly equals the ANSI-1251 wrapper, then it is just an artifact of Codecorps link scan.
+		// If so, we want to swallow it and do absolutely nothing.
+		if (inCommandStr.equals(ansi1251prefix)){
+			LOGGER.info("Swallowed the ANSI-1252 wrapper from link 2D bar code");
+			return;
+		}
+		
 		// TODO if passed from linked CHE, process it anyway.
 		if (!connectedToServer) {
 			LOGGER.debug("NotConnectedToServer: Ignoring scan command: " + inCommandStr);
