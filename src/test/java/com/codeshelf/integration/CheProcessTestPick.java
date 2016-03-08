@@ -1680,11 +1680,31 @@ public class CheProcessTestPick extends ServerTest {
 	}
 	
 	@Test
-	public void testScanPosconToPick() throws IOException{
+	public void testScanPosconToPickSucceedInLableMode() throws IOException{
+		PickSimulator picker = commonScanPosconToPick(CheLightingEnum.LABEL_V1);
+		
+		LOGGER.info("3: Verify that CHE advances to the next item");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		verifyCheDisplay(picker, "D301", "1493", "At 2 - QTY 1", "SCAN UPC NEEDED");
+	}
+	
+	@Test
+	public void testScanPosconToPickFailInPosconMode() throws IOException{
+		PickSimulator picker = commonScanPosconToPick(CheLightingEnum.POSCON_V1);
+		
+		LOGGER.info("3: Verify that CHE ignores the poscon scan");
+		picker.waitInSameState(CheStateEnum.DO_PICK, 1000);
+		verifyCheDisplay(picker, "D302", "1522", "QTY 1", "");
+	}
+	
+	public PickSimulator commonScanPosconToPick(CheLightingEnum cheMode) throws IOException{
 		Facility facility = setUpSimpleNoSlotFacility();
 		beginTransaction();
 		PropertyBehavior.turnOffHK(facility);
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		Che che1 = getChe1();
+		che1.setCheLighting(cheMode);
+		Che.staticGetDao().store(che1);
 		commitTransaction();
 		setUpSmallInventoryAndOrders(facility);
 
@@ -1700,11 +1720,11 @@ public class CheProcessTestPick extends ServerTest {
 		picker.scanSomething("1522");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		
-		LOGGER.info("2: Scan the poscon the order is on, and verify that CHE moves on to the next item");
+		LOGGER.info("2: Scan the poscon the order is on");
 		picker.scanPosition("2");
-		picker.logCheDisplay();
-		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
-	}
+		return picker;
+	}	
+
 
 	@Test
 	public void testLabelLighting() throws IOException{
