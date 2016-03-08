@@ -26,11 +26,16 @@ public class TestJob extends AbstractFacilityJob {
 
 	public static final Object CANCELLED = new Object();
 	
+	public static boolean BlockingJobs = true;
+	public static int runCount = 0;
+	
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TestJob.class);
 	private static BlockingQueue<TestJob> instances = new BlockingArrayQueue<>();
-	private Lock monitor;
+
 	private Condition runningCondition;
-	private CyclicBarrier runBarrier= new CyclicBarrier(2);
+	private CyclicBarrier runBarrier;
+
+	private Lock monitor;
 	private AtomicBoolean isRunning = new AtomicBoolean(false);
 	private AtomicBoolean  isCancelled = new AtomicBoolean(false);
 
@@ -43,8 +48,10 @@ public class TestJob extends AbstractFacilityJob {
 		LOGGER.info("Constructing TestJob instance");
 		monitor = new ReentrantLock();
 		runningCondition = monitor.newCondition();
-		instances.offer(this);
-		
+		if (BlockingJobs) {
+			runBarrier= new CyclicBarrier(2);
+			instances.offer(this);
+		} 
 	}
 
 	public void awaitRunning() throws InterruptedException, TimeoutException {
@@ -101,10 +108,13 @@ public class TestJob extends AbstractFacilityJob {
 				LOGGER.info("Cancelled test job");
 				throw new CancellationException("Cancelled test job");
 			}
-			LOGGER.info("Parties waiting for execution: {}", runBarrier.getNumberWaiting());
-			runBarrier.await(5, TimeUnit.SECONDS); //failsafe for test completion
+			if (runBarrier != null) {
+				LOGGER.info("Parties waiting for execution: {}", runBarrier.getNumberWaiting());
+				runBarrier.await(5, TimeUnit.SECONDS); //failsafe for test completion
+			}
 			isRunning.set(false);
 			LOGGER.info("Completed test job");
+			runCount++;
 			return new Object();
 		} catch (InterruptedException | TimeoutException e) {
 			throw new JobExecutionException(e);
