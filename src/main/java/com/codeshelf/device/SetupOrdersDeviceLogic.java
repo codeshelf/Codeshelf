@@ -1889,7 +1889,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				// At any time during the pick we can change locations.
 				if (inScanPrefixStr.equals(LOCATION_PREFIX) || inScanPrefixStr.equals(TAPE_PREFIX)) {
 					processLocationScan(inScanPrefixStr, inContent);
-				} else if (inScanPrefixStr.equals(POSITION_PREFIX)) {
+				} else if (inScanPrefixStr.equals(POSITION_PREFIX) && getCheLightingEnum() == CheLightingEnum.LABEL_V1) {
 					processPosconScanToPick(inScanPrefixStr, inContent);
 				} else {
 					// DEV-1295.  If the user scanned something, at minimum redraw stuff.
