@@ -306,7 +306,8 @@ public class RadioControllerPacketSchedulerService {
 		}
 		
 		int remainingPackets = countRemainingPackets();
-		mOutboundRadioQueueHistogram.update(remainingPackets);
+		//mOutboundRadioQueueHistogram.update(remainingPackets);
+		mOutboundRadioQueueHistogram.update(20);
 	}
 	
 	private int countRemainingPackets(){
