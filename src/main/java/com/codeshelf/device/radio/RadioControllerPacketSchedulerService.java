@@ -24,12 +24,15 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Histogram;
 import com.codeshelf.flyweight.command.CommandControlABC;
 import com.codeshelf.flyweight.command.CommandGroupEnum;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.INetworkDevice;
+import com.codeshelf.metrics.MetricsGroup;
+import com.codeshelf.metrics.MetricsService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public class RadioControllerPacketSchedulerService {
@@ -91,6 +94,7 @@ public class RadioControllerPacketSchedulerService {
 	private static final int													REPORT_INTERVAL_SECS			= 60 * 5;
 	private packetSchedulerStatsCollector										statsCollector;
 	private final ScheduledExecutorService										schedulerReportService			= Executors.newScheduledThreadPool(1);
+	private Histogram															mOutboundRadioQueueHistogram	= MetricsService.getInstance().createHistogram(MetricsGroup.WSS, "radio.outbound-queue");
 
 	// --------------------------------------------------------------------------
 	public RadioControllerPacketSchedulerService(RadioControllerPacketIOService inPacketIOService) {
@@ -300,6 +304,9 @@ public class RadioControllerPacketSchedulerService {
 		if (deviceHasPendingPackets(device)) {
 			addDeviceToQueue(mDeviceQueue, device);
 		}
+		
+		int remainingPackets = countRemainingPackets();
+		mOutboundRadioQueueHistogram.update(remainingPackets);
 	}
 	
 	private int countRemainingPackets(){

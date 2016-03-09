@@ -1,6 +1,7 @@
 package com.codeshelf.metrics;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
@@ -49,6 +50,11 @@ public class DummyMetricsService extends AbstractCodeshelfIdleService implements
 
 	@Override
 	public Meter createMeter(MetricsGroup group, String metricName) {
+		return null;
+	}
+	
+	@Override
+	public Histogram createHistogram(MetricsGroup group, String metricName) {
 		return null;
 	}
 }

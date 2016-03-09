@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
@@ -172,26 +173,26 @@ public class MetricsService extends AbstractCodeshelfIdleService implements IMet
 	}
 
 	*/
-	/*
-	public static Histogram addHistogram(MetricsGroup group, String metricName) {
+	
+	@Override
+	public Histogram createHistogram(MetricsGroup group, String metricName) {
 		String fullName = getFullName(group, metricName);
 		try {
-			Histogram histogram = getRegistry().getHistograms().get(fullName);
+			Histogram histogram = getMetricsRegistry().getHistograms().get(fullName);
 			if (histogram != null) {
 				// return existing metric
 				// LOGGER.warn("Unable to add metric "+fullName+".  Metric already exists.");
 				return histogram;
 			}
 			// create and register new metric
-			histogram = getRegistry().histogram(fullName);
-			LOGGER.debug("Added timer " + fullName);
+			histogram = getMetricsRegistry().histogram(fullName);
+			LOGGER.debug("Added histogram " + fullName);
 			return histogram;
 		} catch (Exception e) {
 			LOGGER.error("Failed to add histogram " + fullName, e);
 		}
 		return null;
 	}
-	*/
 
 	@Override
 	protected void startUp() throws Exception {
