@@ -95,7 +95,7 @@ public class RadioControllerPacketSchedulerService {
 	private static final int													REPORT_INTERVAL_SECS			= 60 * 5;
 	private packetSchedulerStatsCollector										statsCollector;
 	private final ScheduledExecutorService										schedulerReportService			= Executors.newScheduledThreadPool(1);
-	private Timer																mOutboundRadioQueueHistogram	= MetricsService.getInstance().createTimer(MetricsGroup.WSS, "radio.outbound-queue");
+	private Histogram															mOutboundRadioQueueHistogram	= MetricsService.getInstance().createHistogram(MetricsGroup.WSS, "radio.outbound-queue");
 
 	// --------------------------------------------------------------------------
 	public RadioControllerPacketSchedulerService(RadioControllerPacketIOService inPacketIOService) {
@@ -307,7 +307,7 @@ public class RadioControllerPacketSchedulerService {
 		}
 		
 		int remainingPackets = countRemainingPackets();
-		mOutboundRadioQueueHistogram.update(remainingPackets, TimeUnit.MILLISECONDS);
+		mOutboundRadioQueueHistogram.update(remainingPackets);
 	}
 	
 	private int countRemainingPackets(){
