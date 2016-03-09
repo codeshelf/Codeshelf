@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Timer;
 import com.codeshelf.flyweight.command.CommandControlABC;
 import com.codeshelf.flyweight.command.CommandGroupEnum;
 import com.codeshelf.flyweight.command.IPacket;
@@ -94,7 +95,7 @@ public class RadioControllerPacketSchedulerService {
 	private static final int													REPORT_INTERVAL_SECS			= 60 * 5;
 	private packetSchedulerStatsCollector										statsCollector;
 	private final ScheduledExecutorService										schedulerReportService			= Executors.newScheduledThreadPool(1);
-	private Histogram															mOutboundRadioQueueHistogram	= MetricsService.getInstance().createHistogram(MetricsGroup.WSS, "radio.outbound-queue");
+	private Timer																mOutboundRadioQueueHistogram	= MetricsService.getInstance().createTimer(MetricsGroup.WSS, "radio.outbound-queue");
 
 	// --------------------------------------------------------------------------
 	public RadioControllerPacketSchedulerService(RadioControllerPacketIOService inPacketIOService) {
@@ -306,8 +307,7 @@ public class RadioControllerPacketSchedulerService {
 		}
 		
 		int remainingPackets = countRemainingPackets();
-		//mOutboundRadioQueueHistogram.update(remainingPackets);
-		mOutboundRadioQueueHistogram.update(20);
+		mOutboundRadioQueueHistogram.update(remainingPackets, TimeUnit.MILLISECONDS);
 	}
 	
 	private int countRemainingPackets(){
