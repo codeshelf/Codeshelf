@@ -25,6 +25,12 @@ public class CachedHealthCheck extends CodeshelfHealthCheck {
 		}
 	}
 	
+	public static class CachedEdiSizeCheck extends CachedHealthCheck{
+		public CachedEdiSizeCheck() {
+			super("EDI Size", EdiSizeCheck.class.getSimpleName());
+		}
+	}
+	
 	public static class CachedActiveSiteControllerHealthCheck extends CachedHealthCheck{
 		public CachedActiveSiteControllerHealthCheck() {
 			super("Active Site Controllers", ActiveSiteControllerHealthCheck.class.getSimpleName());

@@ -7,8 +7,6 @@ import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.IEdiImportGateway;
 import com.codeshelf.model.domain.EdiGateway;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.SftpGateway;
-import com.codeshelf.service.ExtensionPointEngine;
 import com.google.inject.Inject;
 
 public class EdiHealthCheck extends HealthCheckRefreshJob{
@@ -73,16 +71,6 @@ public class EdiHealthCheck extends HealthCheckRefreshJob{
 				//Check if EDI exporter can connect to destination
 				if (!ediGateway.testConnection()){
 					errors.append(header + "connection error. ");
-				}
-			}
-			if (ediGateway instanceof SftpGateway) {
-				ExtensionPointEngine theService = ExtensionPointEngine.getInstance(ediGateway.getFacility());
-				EdiFreeSpaceHealthCheckParamaters params = theService.getEdiFreeSpaceParameters();
-				int minAvailableFiles = params.getMinAvailableFilesValue();
-				int minAvailableSpaceMB = params.getMinAvailableSpaceMBValue();
-				List<String> availableSpaceIssues = ((SftpGateway)ediGateway).checkForAvailableSpaceIssues(minAvailableFiles, minAvailableSpaceMB);
-				for (String availableSpaceIssue : availableSpaceIssues){
-					errors.append(header + availableSpaceIssue + ". ");
 				}
 			}
 		}

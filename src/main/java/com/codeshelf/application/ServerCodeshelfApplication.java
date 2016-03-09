@@ -89,6 +89,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 
 		// create server-specific health checks
 		metricsService.registerHealthCheck(new CachedEdiHealthCheck());
+		metricsService.registerHealthCheck(new CachedEdiSizeCheck());
 		metricsService.registerHealthCheck(new CachedActiveSiteControllerHealthCheck());
 		metricsService.registerHealthCheck(new CachedDatabaseConnectionHealthCheck());
 		metricsService.registerHealthCheck(new CachedDataQuantityHealthCheck());

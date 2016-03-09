@@ -13,6 +13,7 @@ import com.codeshelf.metrics.DataQuantityHealthCheck;
 import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.codeshelf.metrics.DropboxGatewayHealthCheck;
 import com.codeshelf.metrics.EdiHealthCheck;
+import com.codeshelf.metrics.EdiSizeCheck;
 import com.codeshelf.metrics.IsProductionServerHealthCheck;
 import com.codeshelf.metrics.PicksActivityHealthCheck;
 import com.codeshelf.model.TestJob;
@@ -68,8 +69,15 @@ public enum ScheduledJobType {
 			true,
 			true,
 			ScheduledJobCategory.CHECK),
-	EdiSizeCheck(EdiHealthCheck.class,
-			"Check EDI directories for health check.",
+	EdiHealthCheck(EdiHealthCheck.class,
+			"Check access to EDI directories.",
+			"0 */30 * * * ?",
+			false,
+			true,
+			ScheduledJobCategory.EDI,
+			ScheduledJobCategory.CHECK),
+	EdiSizeCheck(EdiSizeCheck.class,
+			"Check available space in EDI directories.",
 			"0 */30 * * * ?",
 			false,
 			true,
