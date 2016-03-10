@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Timer;
 import com.codeshelf.flyweight.command.CommandControlABC;
 import com.codeshelf.flyweight.command.CommandGroupEnum;
 import com.codeshelf.flyweight.command.IPacket;

@@ -73,6 +73,22 @@ public class CachedHealthCheckResults {
 		facilityResults.put(facility.getPersistentId(), new FacilityResult(tenantId, facility.getDomainId(), success, facility.isProduction(), message));
 	}
 	
+	/**
+	 * Print out the health check cache. Used for debugging.
+	 */
+	public static synchronized String dataDump(){
+		StringBuilder results = new StringBuilder();
+		HashMap<String, HashMap<UUID, FacilityResult>> jobResults = getInstance().jobResults;
+		for (String jobName : jobResults.keySet()){
+			results.append(String.format("TEST %s\n", jobName));
+			HashMap<UUID, FacilityResult> facilityResults = jobResults.get(jobName);
+			for (FacilityResult facilityResult : facilityResults.values()) {
+				results.append(String.format("\tFacility %s.%s - %s: %s\n", facilityResult.tenantId, facilityResult.facilityId, facilityResult.success ? "PASS" : "FAIL", facilityResult.message));
+			}
+		}
+		return results.toString();
+	}
+	
 	private static class FacilityResult{
 		private boolean success;
 		private boolean isProduction;

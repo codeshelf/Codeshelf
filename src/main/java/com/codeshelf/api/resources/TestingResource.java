@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -36,6 +37,7 @@ import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.scheduler.CachedHealthCheckResults;
 import com.codeshelf.service.ExtensionPointType;
 import com.google.inject.Inject;
 
@@ -197,5 +199,13 @@ public class TestingResource {
 		} catch (Exception e) {
 			return errors.processException(e);
 		}
+	}
+	
+	@GET
+	@Path("/healthchecks/dump")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getHealthCheckDump() {
+		String result = CachedHealthCheckResults.dataDump();
+		return BaseResponse.buildResponse(result);
 	}
 }
