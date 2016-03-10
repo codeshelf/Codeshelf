@@ -121,6 +121,7 @@ public class OrdersResource {
 
 	@POST
 	@Path("/{orderId}/print/preview")
+	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrderDetailsReport(@Context UriInfo uriInfo, @PathParam("orderId") String orderDomainId, String script) throws ScriptException, IOException {
 		OrderHeader orderHeader = OrderHeader.staticGetDao().findByDomainId(facility,  orderDomainId);
 		List<OrderDetailView> orderDetails = this.orderService.getOrderDetailsForOrderId(facility, orderDomainId);
@@ -134,7 +135,7 @@ public class OrdersResource {
 		matchedUris.removeFirst();
 		baseUriBuilder.path(matchedUris.getFirst());
 		URI newLocation = baseUriBuilder.path(OrdersResource.class, "getPreview").build(orderDomainId, token);
-		return Response.created(newLocation).build();
+		return Response.created(newLocation).entity(ImmutableMap.of("location", newLocation.toString())).build();
 	}
 
 	@GET
