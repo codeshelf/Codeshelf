@@ -203,11 +203,15 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 	}
 
 	private void syncByConfig(FacilitySchedulerService service, ScheduledJob job) throws SchedulerException {
+		//Always schedule the job with the scheduler, but begin paused if inactive
 		ScheduledJobType type = job.getType();
-		if (job.isActive()) {
-			service.schedule(job.getCronExpression(), type);
+		service.schedule(job.getCronExpression(), type);
+		if (!job.isActive()) {
+			service.resumeJob(type); //make sure resumed if the state has changed
+			//to prevent "catch up execution" when resuming, the scheduler jobstore has low misfire threshold 
+			// and trigger is set to not act when misfired
 		} else {
-			service.unschedule(type);
+			service.pauseJob(type);
 			AbstractFacilityJob.disabled(service.getFacility(), type.getJobClass());
 		}
 		
@@ -223,9 +227,11 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 
 	public FacilitySchedulerService startFacility(Tenant tenant, Facility facility) throws SchedulerException {
 		String schedulerName = String.format("%s.%s.%s", tenant.getTenantIdentifier(), facility.getDomainId(), facility.getPersistentId());
-		SimpleThreadPool threadPool = new SimpleThreadPool(1, Thread.MIN_PRIORITY);
+		SimpleThreadPool threadPool = new SimpleThreadPool(2, Thread.MIN_PRIORITY); //Allow at least two simultaneous tasks per facility
 		DirectSchedulerFactory schedulerFactory = DirectSchedulerFactory.getInstance();
-		schedulerFactory.createScheduler(schedulerName, schedulerName, threadPool, new RAMJobStore());
+		RAMJobStore store = new RAMJobStore();
+		store.setMisfireThreshold(5000); //basically if paused or delayed don't try to catch up  
+		schedulerFactory.createScheduler(schedulerName, schedulerName, threadPool, store);
 		Scheduler facilityScheduler = schedulerFactory.getScheduler(schedulerName);
 		if (jobFactory != null){
 			facilityScheduler.setJobFactory(jobFactory);

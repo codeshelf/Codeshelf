@@ -24,6 +24,8 @@ import org.quartz.JobExecutionContext;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.impl.DirectSchedulerFactory;
+import org.quartz.simpl.RAMJobStore;
+import org.quartz.simpl.SimpleThreadPool;
 
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.TestJob;
@@ -40,8 +42,14 @@ public class FacilitySchedulerServiceTest {
 	
 	@Before
 	public void setUp() throws SchedulerException, ParseException {
-		DirectSchedulerFactory.getInstance().createVolatileScheduler(1);
-		Scheduler scheduler = DirectSchedulerFactory.getInstance().getScheduler();
+		String schedulerName = "testname";
+		SimpleThreadPool threadPool = new SimpleThreadPool(1, Thread.MIN_PRIORITY);
+		DirectSchedulerFactory schedulerFactory = DirectSchedulerFactory.getInstance();
+		RAMJobStore store = new RAMJobStore();
+		store.setMisfireThreshold(100); //basically if paused or delayed skip execution
+		schedulerFactory.createScheduler(schedulerName, schedulerName, threadPool, store);
+		Scheduler scheduler = schedulerFactory.getScheduler(schedulerName);
+		
 		
 		UserContext systemUser = CodeshelfSecurityManager.getUserContextSYSTEM();
 		Tenant tenant = mock(Tenant.class);
@@ -71,6 +79,17 @@ public class FacilitySchedulerServiceTest {
 		Assert.assertEquals(expression.getTimeZone(), facility.getTimeZone());
 	}
 	
+	
+	@Test
+	public void testPauseResumeAreIdempotent() throws SchedulerException, ParseException {
+		ScheduledJobType testType = ScheduledJobType.Test;	
+		scheduleTestJob(testType);
+		subject.pauseJob(testType);
+		subject.pauseJob(testType);
+		subject.resumeJob(testType);
+		subject.resumeJob(testType);
+	}
+	
 	@Test
 	public void testRescheduleJobClass() throws ParseException, SchedulerException  {
 		ScheduledJobType type = ScheduledJobType.Test;
@@ -95,43 +114,54 @@ public class FacilitySchedulerServiceTest {
 	 */
 	@Test
 	public void runningJobCancelledOnShutdown() {
-		
 	}
+	/**
+	 * Test that the resuming of a paused job does not try to catch up
+	 */
+	@Test
+	public void pausedJobDoesNotRun() throws SchedulerException, ParseException, InterruptedException, TimeoutException, BrokenBarrierException {
+		try {
+			TestJob.BlockingJobs = false;
+			ScheduledJobType testType = ScheduledJobType.Test;	
+			CronExpression firstExp = new CronExpression("* * * * * ?");
+			int total = TestJob.runCount;
+			subject.schedule(firstExp, testType);
+			Thread.sleep(3000);
+			subject.pauseJob(testType);
+			Thread.sleep(3000);
+			subject.resumeJob(testType);
+			Thread.sleep(3000);
+			int newTotal = TestJob.runCount;
+			Assert.assertTrue("should have resumed", newTotal > total);
+			Assert.assertTrue("should have run about 6 times but was " + (newTotal - total), newTotal - total < 7);
+		}
+		finally {
+			TestJob.BlockingJobs = true;
+			
+		}
 
+	}
+	
+	@Test
+	public void manualJobIfPaused() throws ParseException, SchedulerException, InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
+		ScheduledJobType testType = ScheduledJobType.Test;	
+		scheduleTestJob(testType);
+		subject.pauseJob(testType);
+		triggerWait(testType);
+	}
+	
 	@Test
 	public void manualJobTriggersIfNotRunning() throws ParseException, SchedulerException, InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
-		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
 		ScheduledJobType testType = ScheduledJobType.Test;	
-		subject.schedule(firstExp, testType);
-		Assert.assertFalse(subject.hasRunningJob(testType).isPresent());
-		Optional<DateTime> neverTriggered = subject.getPreviousFireTime(testType);
-		Assert.assertFalse(neverTriggered.isPresent());
-		
-		DateTime timeBeforeTrigger = DateTime.now();
-		Thread.sleep(10);
-		Future<ScheduledJobType> future = subject.trigger(testType);
-		TestJob job = TestJob.pollInstance();
-		job.awaitRunning();
-		job.proceed();
-		
-		ScheduledJobType completedType = future.get(40, TimeUnit.SECONDS);
-		Optional<DateTime> timeAfterTrigger = subject.getPreviousFireTime(testType);
-		
-		Assert.assertEquals("completed type was unexpected", testType, completedType);
-		Assert.assertTrue(String.format("job does not appear to have been triggered before: %s, after %s", timeAfterTrigger, timeAfterTrigger), timeBeforeTrigger.isBefore(timeAfterTrigger.get()));
-		Assert.assertFalse("job should not still be running", subject.hasRunningJob(testType).isPresent());
+		scheduleTestJob(testType);
+		triggerWait(testType);
 	}
 	
 	@Test
 	public void noManualJobIfRunning() throws Exception {
-		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
 		ScheduledJobType testType = ScheduledJobType.Test;	
-		
-		subject.schedule(firstExp, testType);
-		Assert.assertFalse(subject.hasRunningJob(testType).isPresent());
-		
-		Optional<DateTime> neverTriggered = subject.getPreviousFireTime(testType);
-		Assert.assertFalse(neverTriggered.isPresent());
+		scheduleTestJob(testType);
+
 		Future<ScheduledJobType> future1 = subject.trigger(testType);
 		TestJob job1 = TestJob.pollInstance();
 		job1.awaitRunning();
@@ -258,4 +288,32 @@ public class FacilitySchedulerServiceTest {
 		Assert.assertEquals(subject.getTenant(), job.getExecutionTenant());
 		Assert.assertEquals(subject.getFacility(), job.getExecutionFacility());
 	}
+	
+
+	private void scheduleTestJob(ScheduledJobType testType) throws SchedulerException, ParseException {
+		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
+		subject.schedule(firstExp, testType);
+		Assert.assertFalse(subject.hasRunningJob(testType).isPresent());
+		Optional<DateTime> neverTriggered = subject.getPreviousFireTime(testType);
+		Assert.assertFalse(neverTriggered.isPresent());
+		
+	}
+	
+	private Optional<DateTime> triggerWait(ScheduledJobType testType) throws InterruptedException, SchedulerException, TimeoutException, BrokenBarrierException, ExecutionException {
+		DateTime timeBeforeTrigger = DateTime.now();
+		Thread.sleep(10);
+		Future<ScheduledJobType> future = subject.trigger(testType);
+		TestJob job = TestJob.pollInstance();
+		job.awaitRunning();
+		job.proceed();
+		
+		ScheduledJobType completedType = future.get(40, TimeUnit.SECONDS);
+		Optional<DateTime> timeAfterTrigger = subject.getPreviousFireTime(testType);
+		Assert.assertEquals("completed type was unexpected", testType, completedType);
+		Assert.assertTrue(String.format("job does not appear to have been triggered before: %s, after %s", timeAfterTrigger, timeAfterTrigger), timeBeforeTrigger.isBefore(timeAfterTrigger.get()));
+		Assert.assertFalse("job should not still be running", subject.hasRunningJob(testType).isPresent());
+		return timeAfterTrigger;
+	}
+
+
 }
