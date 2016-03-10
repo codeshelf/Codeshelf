@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd">
+    <changeSet author="pmonteiro (generated)" id="1457572150955-5">
+        <createTable tableName="print_template">
+            <column name="persistentid" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="domainid" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="INT8">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="template" type="CLOB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="parent_persistentid" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="pmonteiro (generated)" id="1457572150955-6">
+        <addPrimaryKey columnNames="persistentid" constraintName="print_templatPK" tableName="print_template"/>
+    </changeSet>
+    <changeSet author="pmonteiro (generated)" id="1457572150955-7">
+        <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_PRINT_TEMPLATE_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="print_template"/>
+    </changeSet>
+    <changeSet author="pmonteiro (generated)" id="1457572150955-8">
+        <addForeignKeyConstraint baseColumnNames="parent_persistentid" baseTableName="print_template" constraintName="FK_iq2i482mx7jgj67cot3r73dc1" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="location"/>
+    </changeSet>
+</databaseChangeLog>

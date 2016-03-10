@@ -86,7 +86,8 @@
         <mapping class="com.codeshelf.model.domain.ExtensionPoint"/>
         <mapping class="com.codeshelf.model.domain.ExportMessage"/>
         <mapping class="com.codeshelf.edi.WorkInstructionCsvBean"/>
-		<mapping class="com.codeshelf.model.domain.FacilityMetric"/>
+        <mapping class="com.codeshelf.model.domain.FacilityMetric"/>
+        <mapping class="com.codeshelf.model.domain.PrintTemplate"/>
         <mapping class="com.codeshelf.model.domain.ScheduledJob"/>
         <mapping class="com.codeshelf.model.domain.WorkerHourlyMetric"/>
         <mapping class="com.codeshelf.model.domain.FacilityProperty"/>
