@@ -6,11 +6,6 @@
 
 package com.codeshelf.application;
 
-import groovy.util.ResourceException;
-import groovy.util.ScriptException;
-
-import java.io.IOException;
-
 import lombok.Getter;
 
 import org.slf4j.Logger;
@@ -26,13 +21,11 @@ import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.IsProductionSiteControllerHealthCheck;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.RadioOnHealthCheck;
-import com.codeshelf.shell.groovy.GroovyShellService;
 import com.codeshelf.ws.client.CsClientEndpoint;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
 public final class SiteControllerApplication extends CodeshelfApplication {
+	@SuppressWarnings("unused")
 	private static final Logger							LOGGER						= LoggerFactory.getLogger(SiteControllerApplication.class);
 
 	@Getter
@@ -64,13 +57,6 @@ public final class SiteControllerApplication extends CodeshelfApplication {
 			LOGGER.error("unable to start clojure repl", e);
 		}
 		*/
-		try {
-			startGroovyEngine(deviceManager);
-		} catch (Exception e) {
-			LOGGER.error("unable to start groovy repl", e);
-		}
-
-		
 		new SiteControllerMessageProcessor(deviceManager,clientEndpoint);
 	}
 
@@ -131,16 +117,5 @@ public final class SiteControllerApplication extends CodeshelfApplication {
 
 		    RT.var("lw", "*manager*", deviceManager);
 	}
-*/
-	
-	private static void startGroovyEngine(CsDeviceManager deviceManager) throws IOException, ResourceException, ScriptException, InstantiationException, IllegalAccessException, InterruptedException {
-		
-		GroovyShellService shell = new GroovyShellService(
-			ImmutableMap.<String,Object>of("deviceManager", deviceManager),
-			ImmutableList.<String>of("scripts/simulation/init.groovy"),
-			8185);
-		shell.launchInBackground();
-
-	}
-	
+*/	
 }

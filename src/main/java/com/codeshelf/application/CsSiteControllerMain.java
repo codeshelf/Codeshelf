@@ -60,7 +60,13 @@ public final class CsSiteControllerMain {
 	/**
 	 */
 	public static void main(String[] inArgs) throws Exception {
-
+		String usernameStandby = System.getProperty("websocket.username_standby");
+		String portStandby = System.getProperty("sitecontroller.port_standby");
+		if (inArgs.length > 0 && "standby".equalsIgnoreCase(inArgs[0]) && usernameStandby != null && portStandby != null){
+			System.setProperty("websocket.username", usernameStandby);
+			System.setProperty("sitecontroller.port", portStandby);
+		}
+		
 		// Create and start the application.
 		ICodeshelfApplication application = createApplication(new DefaultModule());
 		application.startServices();
