@@ -3,6 +3,8 @@ package com.codeshelf.model.domain;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -55,6 +57,17 @@ public class SiteController extends WirelessDeviceABC {
 	@Setter
 	@JsonProperty
 	private String				describeLocation;
+	
+	@Column(nullable = false)
+	@Enumerated(value = EnumType.STRING)
+	@Getter
+	@Setter
+	@JsonProperty
+	private SiteControllerRole	role;
+	
+	
+	public enum SiteControllerRole {NETWORK_PRIMARY, STANDBY};
+
 
 	public SiteController () {
 		this.monitor = true; // maybe this should be false, once there is a UI to set it, as it can cause bogus alerts when setting up sites
