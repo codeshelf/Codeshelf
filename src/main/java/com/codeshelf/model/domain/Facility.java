@@ -56,6 +56,7 @@ import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.SiteController.SiteControllerRole;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
@@ -482,7 +483,7 @@ public class Facility extends Location {
 				}
 			}
 			if (foundSiteController == null) {
-				network.createSiteController(Integer.parseInt(siteControllerId), "Default Area", false);
+				network.createSiteController(Integer.parseInt(siteControllerId), "Default Area", false, SiteControllerRole.NETWORK_PRIMARY);
 			}
 		}
 	}
@@ -1298,7 +1299,7 @@ public class Facility extends Location {
 			// pick first available site controller serial number e.g. 5001
 			siteconSerial++;
 		}
-		network.createSiteController(siteconSerial, "Default Area", false);
+		network.createSiteController(siteconSerial, "Default Area", false, SiteControllerRole.NETWORK_PRIMARY);
 
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();

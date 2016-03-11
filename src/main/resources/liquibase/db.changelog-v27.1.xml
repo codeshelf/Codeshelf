@@ -13,4 +13,8 @@
 	<changeSet author="ilya (generated)" id="1457718392199-4">
 		<addNotNullConstraint columnDataType="varchar(255)" columnName="role" defaultNullValue="NETWORK_PRIMARY" tableName="site_controller" />
 	</changeSet>
+	<changeSet author="ilya (generated)" id="1457718392199-5">
+		<dropUniqueConstraint constraintName="uc_site_controller_domainid" tableName="site_controller"/>
+		<dropUniqueConstraint constraintName="uc_site_controller_parent_persistentid_device_guid" tableName="site_controller"/>
+	</changeSet>
 </databaseChangeLog>

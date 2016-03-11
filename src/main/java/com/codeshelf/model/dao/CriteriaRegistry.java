@@ -64,6 +64,10 @@ public class CriteriaRegistry {
 		indexedCriteria.put("cheByFacility",
 			new TypedCriteria("from Che where parent.parent.persistentId = :facilityId",
 				"facilityId", UUID.class));
+		
+		indexedCriteria.put("siteControllersByFacility",
+			new TypedCriteria("from SiteController where parent.parent.persistentId = :facilityId",
+				"facilityId", UUID.class));
 
 		indexedCriteria.put("locationAliasesByFacility",
 			new TypedCriteria("from LocationAlias where parent.persistentId = :facilityId and active = true",

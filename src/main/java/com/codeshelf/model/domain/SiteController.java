@@ -23,11 +23,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
-@Table(name = "site_controller",uniqueConstraints = {
-		@UniqueConstraint(columnNames = {"domainid"}), 
-		@UniqueConstraint(columnNames = {"parent_persistentid", "device_guid"}),
-		@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})
-})
+@Table(name = "site_controller",uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -54,9 +50,8 @@ public class SiteController extends WirelessDeviceABC {
 	// Text describing how to find the hardware installed in the warehouse (should be required non-blank when registering)
 	@Column(nullable = false,name="describe_location")
 	@Getter
-	@Setter
 	@JsonProperty
-	private String				describeLocation;
+	private String				location;
 	
 	@Column(nullable = false)
 	@Enumerated(value = EnumType.STRING)
@@ -71,7 +66,7 @@ public class SiteController extends WirelessDeviceABC {
 
 	public SiteController () {
 		this.monitor = true; // maybe this should be false, once there is a UI to set it, as it can cause bogus alerts when setting up sites
-		this.describeLocation = defaultLocationDescription;
+		this.location = defaultLocationDescription;
 		this.role = SiteControllerRole.NETWORK_PRIMARY;
 	}
 
@@ -94,5 +89,28 @@ public class SiteController extends WirelessDeviceABC {
 	public String toString() {
 		return this.getDomainId();
 	}
+	
+	public String getNetworkDomainId(){
+		return getParent().getDomainId();
+	}
 
+	public String getChannelUi(){
+		return getParent().getChannel().toString();
+	}
+
+	public void setLocation(String location) {
+		this.location = location;
+		setDescription("Site Controller for " + location);
+	}
+	
+	public void makePrimaryForNetwork(){
+		CodeshelfNetwork network = getParent();
+		for (SiteController controller : network.getSiteControllers().values()) {
+			if (this.equals(controller)){
+				controller.setRole(SiteControllerRole.NETWORK_PRIMARY);
+			} else {
+				controller.setRole(SiteControllerRole.STANDBY);
+			}
+		}
+	}
 }

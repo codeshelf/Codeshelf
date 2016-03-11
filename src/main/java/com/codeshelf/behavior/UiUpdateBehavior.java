@@ -23,6 +23,7 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.codeshelf.model.domain.Che.ProcessMode;
+import com.codeshelf.util.FormUtility;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.Facility;
@@ -34,6 +35,8 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.ScannerTypeEnum;
+import com.codeshelf.model.domain.SiteController;
+import com.codeshelf.model.domain.SiteController.SiteControllerRole;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WirelessDeviceABC;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -367,6 +370,72 @@ public class UiUpdateBehavior implements IApiBehavior {
 		FacilityPropertyType type = FacilityPropertyType.valueOf(name);
 		PropertyBehavior.setProperty(facility, type, value);
 		webSocketManagerService.sendMessage(facility.getSiteControllerUsers(), new PropertyChangeMessage(type, value));
+	}
+
+	public CodeshelfNetwork getDefaultFacilityNetwork(String facilityId) {
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+		if (facility == null) {
+			LOGGER.error("Unable to find facility {}", facilityId);
+			return null;
+		}
+		return facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+	}
+	
+	public void updateSiteController(String uuid, String domainId, String location, String networkDomainId){
+		SiteController controller = SiteController.staticGetDao().findByPersistentId(uuid);
+		if (controller == null) {
+			FormUtility.throwUiValidationException("Site Controller", "Server Error: Site Controller " + uuid + " not found", ErrorCode.GENERAL);
+		}
+		CodeshelfNetwork network = validateSiteControllerParams(controller.getFacility(), domainId, location, networkDomainId);
+
+		controller.setParent(network);
+		controller.setDomainId(domainId);
+		controller.setLocation(location);
+		SiteController.staticGetDao().store(controller);
+	}
+	
+	public void addSiteController(String facilityUUID, String domainId, String location, String networkDomainId){
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityUUID);
+		if (facility == null) {
+			FormUtility.throwUiValidationException("Facility", "Server Error: Facility " + facilityUUID + " not found", ErrorCode.GENERAL);
+		}
+		CodeshelfNetwork network = validateSiteControllerParams(facility, domainId, location, networkDomainId);
+		SiteController existingController = SiteController.staticGetDao().findByDomainId(network, domainId);
+		if (existingController != null) {
+			FormUtility.throwUiValidationException("Site Controller ID", "Site controller " + domainId + " already exists.", ErrorCode.FIELD_INVALID);
+		}
+
+		network.createSiteController(Integer.parseInt(domainId), location, false, SiteControllerRole.STANDBY);
+		
+	}
+	
+	private CodeshelfNetwork validateSiteControllerParams(Facility facility, String domainId, String location, String networkDomainId){
+		if (domainId == null || domainId.isEmpty()) {
+			FormUtility.throwUiValidationException("Site Controller ID", "Required Field.", ErrorCode.FIELD_REQUIRED);	
+		}
+		try {
+			Integer.parseInt(domainId);
+		} catch (Exception e) {
+			FormUtility.throwUiValidationException("Site Controller ID", domainId + " is not an integer.", ErrorCode.FIELD_WRONG_TYPE);
+		}
+		if (location == null || location.isEmpty()) {
+			FormUtility.throwUiValidationException("Location", "Required Field.", ErrorCode.FIELD_REQUIRED);	
+		}
+		if (networkDomainId == null || networkDomainId.isEmpty()) {
+			FormUtility.throwUiValidationException("Network", "Required Field.", ErrorCode.FIELD_REQUIRED);	
+		}
+		CodeshelfNetwork network = facility.getNetwork(networkDomainId);
+		if (network == null) {
+			FormUtility.throwUiValidationException("Network", "Server Error: Network " + networkDomainId + " not found.", ErrorCode.FIELD_INVALID);
+		}
+		return network;
+	}
+	
+	public void deleteSiteController(String uuid){
+		SiteController controller = SiteController.staticGetDao().findByPersistentId(uuid);
+		if (controller != null) {
+			controller.getParent().removeSiteController(controller.getDomainId());
+		}
 	}
 
 }

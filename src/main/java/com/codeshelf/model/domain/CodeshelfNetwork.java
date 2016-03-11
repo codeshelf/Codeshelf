@@ -30,6 +30,7 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.SiteController.SiteControllerRole;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -289,7 +290,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		return this.getParent();
 	}
 
-	public void createSiteController(int serialNumber, String inDescribeLocation, Boolean inMonitor) {
+	public void createSiteController(int serialNumber, String inLocation, Boolean inMonitor, SiteControllerRole role) {
 		String username = Integer.toString(serialNumber);
 
 		// create site controller object (or use found)
@@ -297,9 +298,9 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		if (sitecon == null) {
 			sitecon = new SiteController();
 			sitecon.setDomainId(username);
-			sitecon.setDescription("Site Controller for " + this.getDomainId());
-			sitecon.setDescribeLocation(inDescribeLocation);
+			sitecon.setLocation(inLocation);
 			sitecon.setMonitor(inMonitor);
+			sitecon.setRole(role);
 			this.addSiteController(sitecon);
 
 			try {
