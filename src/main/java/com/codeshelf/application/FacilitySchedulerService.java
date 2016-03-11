@@ -182,15 +182,15 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 								cronExpressionObj.setTimeZone(timezone);
 								jobs.put(type.get(), cronExpressionObj);
 							} catch (ParseException e) {
-								LOGGER.warn("Unable to parse cron expression {} for jobKey {}", expression, jobKey, e);
+								LOGGER.warn("Unable to parse cron expression {} for jobKey {} for {}", expression, jobKey, getLoggingContext(), e);
 							}
 						}
 					}
 				} catch (SchedulerException e) {
-					LOGGER.warn("Unable to return schedules for jobKey {}", jobKey, e);
+					LOGGER.warn("Unable to return schedules for jobKey {} for {}", jobKey, getLoggingContext(), e);
 				} 
 			} else {
-				LOGGER.error("Unable to find type matching key {}", jobKey);
+				LOGGER.error("Unable to find type matching jobKey {} for {}", jobKey, getLoggingContext());
 			}
 		}
 		return jobs;
@@ -212,7 +212,8 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		Trigger trigger = TriggerBuilder
 	            .newTrigger()
 	            .withIdentity(jobType.getKey().toString())
-	            .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+	            .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression)
+	            	.withMisfireHandlingInstructionDoNothing())
 	            .build();
 		scheduler.unscheduleJob(trigger.getKey());
 		scheduler.deleteJob(jobType.getKey());
@@ -220,14 +221,9 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		if (jobType.isTriggerOnEnable()) {
 			scheduler.triggerJob(jobType.getKey());
 		}
-		LOGGER.info("Scheduled {} for {}", jobType, cronExpression);
+		LOGGER.info("Scheduled {} with cron {} for {}", jobType, cronExpression, getLoggingContext());
 	}
 
-	public boolean unschedule(ScheduledJobType type) throws SchedulerException {
-		cancelJob(type);
-		return scheduler.deleteJob(type.getKey());
-	}
-	
 	public Optional<JobFuture<ScheduledJobType>> hasRunningJob(ScheduledJobType jobType) throws SchedulerException {
 		for (JobExecutionContext context : scheduler.getCurrentlyExecutingJobs()) {
 			ScheduledJobType runningType = (ScheduledJobType) context.getMergedJobDataMap().get(TYPE_PROPERTY);
@@ -288,6 +284,20 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 
 	public boolean removeJob(ScheduledJobType type) throws SchedulerException {
 		return scheduler.deleteJob(type.getKey());
+	}
+
+	public void pauseJob(ScheduledJobType type) throws SchedulerException {
+		LOGGER.info("Pausing job: {} for {} ", type, getLoggingContext());
+		scheduler.pauseJob(type.getKey());
+	}
+
+	public void resumeJob(ScheduledJobType type) throws SchedulerException {
+		LOGGER.info("Resuming job: {} for {} ", type, getLoggingContext());
+		scheduler.resumeJob(type.getKey());
+	}
+	
+	private String getLoggingContext() {
+		return tenant.toString() + "/" + facility.toString();
 	}
 
 }
