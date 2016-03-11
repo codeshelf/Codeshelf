@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -54,6 +55,7 @@ import lombok.ToString;
 @IndexSubclasses
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
 @JsonPropertyOrder({ "domainId", "fullDomainId" })
+@JsonIgnoreProperties({"className"})
 @ToString(doNotUseGetters = true, of = { "domainId" })
 public abstract class DomainObjectABC implements IDomainObject {
 

@@ -37,7 +37,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
 
-@Path("/workers")
 public class WorkersResource extends CRUDResource<Worker, Facility>{
 	private static Set<String> updatableProperties = ImmutableSet.of(
 			"active",
@@ -55,7 +54,7 @@ public class WorkersResource extends CRUDResource<Worker, Facility>{
 	
 	@Inject
 	public WorkersResource(WorkBehavior workBehavior, NotificationBehavior notificationBehavior) {
-		super(Worker.class, "workers", Optional.of(updatableProperties));
+		super(Worker.class, "worker", Optional.of(updatableProperties));
 		this.workBehavior = workBehavior;
 		this.notificationBehavior = notificationBehavior;
 	}
