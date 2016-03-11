@@ -761,7 +761,7 @@ public class ScriptServerRunner {
 		}
 		String serviceDomainId = orders?"SFTPORDERS":"SFTPWIS";
 		EDIGatewaysResource res = new EDIGatewaysResource(new EdiExportService());
-		res.setFacility(facility);
+		res.setParent(facility);
 		//MultivaluedMapImpl <String, String> params = new MultiValueMap();
 		//HashMap<String, String> params = new HashMap<>();
 		MultivaluedMapImpl params = new MultivaluedMapImpl();
@@ -783,7 +783,7 @@ public class ScriptServerRunner {
 			}
 			params.add("exportPath", parts[6]);
 		}
-		res.updateEdiGateway(serviceDomainId, params);
+		res.update(serviceDomainId, params);
 	}
 
 	/**

@@ -59,6 +59,7 @@ import com.codeshelf.api.pickscript.ScriptStepParser.StepPart;
 import com.codeshelf.api.resources.ChesResource;
 import com.codeshelf.api.resources.ExtensionPointsResource;
 import com.codeshelf.api.resources.OrdersResource;
+import com.codeshelf.api.resources.PrintTemplatesResource;
 import com.codeshelf.api.resources.WorkersResource;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.FacilityShort;
@@ -193,14 +194,22 @@ public class FacilityResource {
 	@Path("/edigateways")
 	public EDIGatewaysResource getEdiResource() throws Exception {
 		EDIGatewaysResource r = resourceContext.getResource(EDIGatewaysResource.class);
-		r.setFacility(facility);
+		r.setParent(facility);
 		return r;
 	}
 
+	@Path("/templates")
+	public PrintTemplatesResource getPrintTemplatesResource() throws Exception {
+		PrintTemplatesResource r = resourceContext.getResource(PrintTemplatesResource.class);
+		r.setParent(facility);
+		return r;
+	}
+
+	
 	@Path("/workers")
 	public WorkersResource getWorkersResource() throws Exception {
 		WorkersResource r = resourceContext.getResource(WorkersResource.class);
-		r.setFacility(facility);
+		r.setParent(facility);
 		return r;
 	}
 

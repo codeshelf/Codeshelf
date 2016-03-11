@@ -590,7 +590,13 @@ public abstract class MockDaoTest extends MinimalTest {
 	protected void beginTransaction() {
 		tenantPersistenceService.beginTransaction();
 	}
+
 	protected void commitTransaction() {
 		tenantPersistenceService.commitTransaction();
 	}
+	
+	protected void rollbackTransaction() {
+		tenantPersistenceService.rollbackTransaction();
+	}
+
 }

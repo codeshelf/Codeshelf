@@ -115,6 +115,8 @@ dependencies {
 
 			'com.opencsv:opencsv:3.5',
 			'javax.validation:validation-api:1.1.0.Final',
+      'org.hibernate:hibernate-validator:5.2.4.Final',
+      
             'joda-time:joda-time:2.3',
 			'com.joestelmach:natty:0.11',
 			'org.apache.shiro:shiro-guice:1.+',

@@ -11,6 +11,8 @@ import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -53,10 +55,9 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 	}
 
 	@Column(nullable = false)
-	@Getter
 	@Setter
 	@JsonProperty
-	private Boolean		active;
+	private boolean active;
 
 	@Column(nullable = true, name = "first_name")
 	@Getter
@@ -67,6 +68,8 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 	@Column(nullable = false, name = "last_name")
 	@Getter
 	@Setter
+	@NotNull(message="lastName is required")
+	@Size(min=1, message="lastName is required")
 	@JsonProperty
 	private String		lastName;
 
@@ -88,6 +91,7 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 	@JsonProperty
 	private String		hrId;
 
+	@NotNull
 	@Column(nullable = false)
 	@Getter
 	@Setter
@@ -129,6 +133,10 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 
 	}
 
+	//TODO use lombok config or change refs to isActive
+	public boolean getActive() {
+		return active;
+	}
 	
 	@Override
 	public String getDefaultDomainIdPrefix() {
@@ -155,10 +163,6 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 		}
 		if (getDomainId() == null || "".equals(getDomainId())) {
 			errors.addErrorMissingBodyParam("domainId");
-			allOK = false;
-		}
-		if (active == null) {
-			errors.addErrorMissingBodyParam("active");
 			allOK = false;
 		}
 		return allOK;
@@ -207,7 +211,7 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 		if (firstName != null && !firstName.isEmpty()) {
 			return firstName + " " + lastName;
 		}
-		if (!lastName.isEmpty()) {
+		if (lastName != null && !lastName.isEmpty()) {
 			return lastName;
 		}
 		return getDomainId();

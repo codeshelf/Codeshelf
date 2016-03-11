@@ -1,6 +1,7 @@
 package com.codeshelf.api;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import javassist.NotFoundException;
 
@@ -42,6 +43,14 @@ public class ErrorResponse {
 		if (errors == null) {errors = new ArrayList<>();}
 		errors.add(error);
 	}
+
+	public void addErrors(Set<String> messages) {
+		if (errors == null) {errors = new ArrayList<>();}
+		if(messages != null) {
+			errors.addAll(messages);
+		}
+	}
+
 	
 	public void addErrorMissingQueryParam(String param) {
 		addError("Missing query param '" + param + "'");

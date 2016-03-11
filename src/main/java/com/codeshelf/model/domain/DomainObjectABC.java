@@ -19,11 +19,8 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Version;
-
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
-import lombok.ToString;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 import org.atteo.classindex.ClassIndex;
 import org.atteo.classindex.IndexSubclasses;
@@ -34,10 +31,15 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.google.common.base.Strings;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.ToString;
 
 // --------------------------------------------------------------------------
 /**
@@ -52,7 +54,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @IndexSubclasses
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
 @JsonPropertyOrder({ "domainId", "fullDomainId" })
-@JsonIgnoreProperties({"className"})
 @ToString(doNotUseGetters = true, of = { "domainId" })
 public abstract class DomainObjectABC implements IDomainObject {
 
@@ -75,8 +76,9 @@ public abstract class DomainObjectABC implements IDomainObject {
 	private UUID persistentId = UUID.randomUUID();
 
 	// The domain ID
-	@NonNull
 	@Column(name = "domainid", nullable = false)
+	@NotNull(message="domainId is required")
+	@Size(min=1, message="domainId is required")
 	@Getter
 	@JsonProperty
 	private String				domainId;
@@ -95,14 +97,11 @@ public abstract class DomainObjectABC implements IDomainObject {
 	}
 
 	public DomainObjectABC(String inDomainId) {
-		this.domainId = inDomainId;
+		setDomainId(inDomainId);
 	}
 	
 	public void setDomainId(String inDomainId) {
-		if (inDomainId.isEmpty()) {
-			inDomainId = null;
-		}
-		domainId = inDomainId;
+		domainId = Strings.emptyToNull(inDomainId);
 	}
 
 	// --------------------------------------------------------------------------
@@ -117,7 +116,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	/**
 	 * @return
 	 */
-	@JsonProperty
+	@JsonProperty()
 	public final String getClassName() {
 		return Hibernate.getClass(this).getSimpleName();
 	}
