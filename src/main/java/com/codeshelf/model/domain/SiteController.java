@@ -72,6 +72,7 @@ public class SiteController extends WirelessDeviceABC {
 	public SiteController () {
 		this.monitor = true; // maybe this should be false, once there is a UI to set it, as it can cause bogus alerts when setting up sites
 		this.describeLocation = defaultLocationDescription;
+		this.role = SiteControllerRole.NETWORK_PRIMARY;
 	}
 
 	@Override
