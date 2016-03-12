@@ -39,6 +39,7 @@ Admin:
   - "order:*"
   - "workinstruction:*"
   - "printtemplate:*"
+  - "edi:*"
 View:
   - "companion:view"
   - "order:view"
