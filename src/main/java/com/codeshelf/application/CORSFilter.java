@@ -46,7 +46,12 @@ public class CORSFilter implements Filter {
 			"Vary", "Accept-Encoding, Origin"
 		);
 		httpResponse.addHeader(
-			"Access-Control-Allow-Headers", "accept, content-type"
+			//these were exposed for pdf stream
+			"Access-Control-Expose-Headers", "content-range, content-encoding, content-length, accept-ranges"
+		);
+		httpResponse.addHeader(
+			//accept-ranges was for pdf stream
+			"Access-Control-Allow-Headers", "accept, content-type, range, user-agent"
 		);
 
 		String method = ((HttpServletRequest) request).getMethod();
