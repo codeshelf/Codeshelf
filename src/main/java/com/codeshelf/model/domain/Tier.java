@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -495,4 +496,71 @@ public class Tier extends Location {
 			throw new InputValidationException(this, "tape Id", inTapeGuidString, ErrorCode.FIELD_WRONG_TYPE);
 	}
 
+	/**
+	 * This is used to force somewhat unusual LED values to the slots and tier.
+	 * Must be in a transaction already
+	 * inSlotStartingLeds string has the easily parseable form of "2/25/27/42"
+	 */
+	public void setSlotTierLEDs(int inTierStartLed,
+		int inLedCountTier,
+		boolean inLowerLedNearAnchor,
+		int inLedsPerSlot,
+		String inSlotStartingLeds) {
+		setFirstLedNumAlongPath((short) inTierStartLed);
+		int lastTierLed = inTierStartLed + inLedCountTier - 1;
+		setLastLedNumAlongPath((short) lastTierLed);
+		setLowerLedNearAnchor(inLowerLedNearAnchor);
+
+		Tier.staticGetDao().store(this);
+		String[] strArray = inSlotStartingLeds.split("/");
+		int slotCountForLeds = strArray.length;
+		int[] firstLedArray = new int[slotCountForLeds];
+		List<Slot> slots = this.getSlotsInDomainIdOrder();
+		if (slots.size() != slotCountForLeds) {
+			LOGGER.warn("LEDs format:{} did not match slot count in", this.getFullDomainId());
+			return;
+		}
+
+		try {
+			for (int i = 0; i < strArray.length; i++) {
+				firstLedArray[i] = Integer.parseInt(strArray[i]);
+			}
+		} catch (NumberFormatException e) {
+			LOGGER.warn("Bad starting LEDs format:{}. Do as 2/8/14", inSlotStartingLeds);
+			return;
+		}
+
+		if (inLedsPerSlot <= 0)
+			return;
+		// We want the slots sorted either S1 to Sn, or Sn to S1
+		// Then iterate through the slots But might have to go in reverse
+
+		if (!inLowerLedNearAnchor) {
+			Collections.reverse(slots);
+		}
+
+		int index = 0;
+		for (Location slot : slots) {
+			short firstSlotLed = (short) firstLedArray[index];
+			short lastSlotLed = (short) (firstSlotLed + inLedsPerSlot - 1);
+
+			slot.setFirstLedNumAlongPath(firstSlotLed);
+			slot.setLastLedNumAlongPath(lastSlotLed);
+			setLowerLedNearAnchor(inLowerLedNearAnchor);
+			Slot.staticGetDao().store(slot);
+			index++;
+		}
+	}
+
+	/**
+	 * Convenience function
+	 */
+	public List<Slot> getSlotsInDomainIdOrder() {
+		List<Slot> slotList = new ArrayList<Slot>();
+		for (Location slot : getChildren()) {
+			slotList.add((Slot) slot);
+		}
+		Collections.sort(slotList, new SlotIDComparator());
+		return slotList;
+	}
 }
