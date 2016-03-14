@@ -3199,6 +3199,11 @@ public class AisleImporterTest extends MockDaoTest {
 		assertLeds(facility, "A78.B1.T7.S5", 122, 125);
 		assertLeds(facility, "A78.B1.T1.S1", 339, 342);
 		assertLeds(facility, "A78.B1.T1.S5", 374, 377);
+		
+		LOGGER.info("1b: Show that no indicator lights were set by the basic file.");
+		assertLeds(facility, "A78", 0, 0);
+		assertLeds(facility, "A78.B1", 0, 0);
+
 		commitTransaction();
 
 		LOGGER.info("2: Directly call the API to set tiers as we want it.");
@@ -3227,11 +3232,11 @@ public class AisleImporterTest extends MockDaoTest {
 		assertLeds(facility, "A78.B1", 0, 0);
 		Bay bay1 = (Bay) facility.findSubLocationById("A78.B1");
 		Aisle aisle78 = (Aisle) facility.findSubLocationById("A78");
-		bay1.setIndicatorLedValuesInteger(4,6);
-		aisle78.setIndicatorLedValuesInteger(14,16);
-		tier5.setIndicatorLedValuesInteger(24,26);
+		bay1.setIndicatorLedValuesInteger(4, 6);
+		aisle78.setIndicatorLedValuesInteger(14, 16);
+		tier5.setIndicatorLedValuesInteger(24, 26);
 		commitTransaction();
-		
+
 		beginTransaction();
 		facility = facility.reload();
 		assertLeds(facility, "A78.B1", 4, 6);
@@ -3241,7 +3246,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		beginTransaction();
 		facility = facility.reload();
-		// This is tweaked
+		// Does reload clear out what was set before?
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A78,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,144,,,,\r\n" //
@@ -3254,8 +3259,10 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T7,,5,42,160,,\r\n" //
 				+ "Tier,T8,,5,42,180,,\r\n" //
 				+ "Tier,T9,,5,42,210,,\r\n";//
+				// + "Function,SetIndicators,A78.B1,4,6,\r\n";//
 
 		importAislesData(facility, csvString2);
+		assertLeds(facility, "A78.B1", 0, 0);
 		commitTransaction();
 
 	}

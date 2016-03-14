@@ -191,6 +191,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 					finalizeTiersInThisAisle(lastAisle);
 					// Kludge!  make sure lastAisle reference is not stale
 					lastAisle = Aisle.staticGetDao().findByDomainId(mFacility, lastAisle.getDomainId());
+					clearIndicatorsThisAisle(lastAisle);
 					finalizeVerticesThisAisle(lastAisle, mLastReadBayForVertices);
 					// starting an aisle copied mLastReadBay to mLastReadBayForVertices and cleared mLastReadBay
 					// do not do makeUnusedLocationsInactive() here. Done in the aisle bean read if a new aisle
@@ -207,6 +208,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				finalizeTiersInThisAisle(theAisleReference);
 				// Kludge! make sure lastAisle reference is not stale
 				theAisleReference = Aisle.staticGetDao().findByDomainId(mFacility, theAisleReference.getDomainId());
+				clearIndicatorsThisAisle(theAisleReference);
 				finalizeVerticesThisAisle(theAisleReference, mLastReadBay);
 				makeUnusedLocationsInactive(theAisleReference);
 			}
@@ -569,6 +571,22 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	}
 
 	// --------------------------------------------------------------------------
+	/**
+	 * If indicators had been set before, but we reread the aisle, we want to clear.
+	 * The file may have function calls to reset again, but may not
+	 */
+	private void clearIndicatorsThisAisle(final Aisle inAisle) {
+		if (inAisle.getFirstLedNumAlongPath() != null || inAisle.getLastLedNumAlongPath() != null) {
+			inAisle.setIndicatorLedValues(null, null);
+		}
+		for (Location bay: inAisle.getChildren()){
+			if (bay.getFirstLedNumAlongPath() != null || bay.getLastLedNumAlongPath() != null) {
+				bay.setIndicatorLedValues(null, null);
+			}		
+		}		
+	}
+
+		// --------------------------------------------------------------------------
 	/**
 	 * @param inAisle
 	 */
@@ -1322,6 +1340,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 						finalizeTiersInThisAisle(lastAisle);
 						// Kludge!  make sure lastAisle reference is not stale
 						lastAisle = Aisle.staticGetDao().findByDomainId(mFacility, lastAisle.getDomainId());
+						clearIndicatorsThisAisle(lastAisle);
 						finalizeVerticesThisAisle(lastAisle, mLastReadBayForVertices);
 						mDepthCm = depthCm;
 					}
