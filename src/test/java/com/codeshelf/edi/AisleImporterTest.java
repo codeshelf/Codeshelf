@@ -3088,10 +3088,16 @@ public class AisleImporterTest extends MockDaoTest {
 		assertLeds(inFacility, locId, expectedLed, expectedLed);
 	}
 
+	/**
+	 * This allows 0 to match null if the Led values are not defined.
+	 */
 	private void assertLeds(Facility inFacility, String locId, int expectedFirst, int expectedLast) {
 		Location loc = inFacility.findSubLocationById(locId);
-		Assert.assertEquals(toShort(expectedFirst), loc.getFirstLedNumAlongPath());
-		Assert.assertEquals(toShort(expectedLast), loc.getLastLedNumAlongPath());
+		Assert.assertNotNull(loc);
+		Short firstValue = loc.getFirstLedNumAlongPath() == null ? 0 : loc.getFirstLedNumAlongPath();
+		Short lasstValue = loc.getFirstLedNumAlongPath() == null ? 0 : loc.getLastLedNumAlongPath();
+		Assert.assertEquals(toShort(expectedFirst), firstValue);
+		Assert.assertEquals(toShort(expectedLast), lasstValue);
 	}
 
 	@Test
@@ -3193,6 +3199,11 @@ public class AisleImporterTest extends MockDaoTest {
 		assertLeds(facility, "A78.B1.T7.S5", 122, 125);
 		assertLeds(facility, "A78.B1.T1.S1", 339, 342);
 		assertLeds(facility, "A78.B1.T1.S5", 374, 377);
+		
+		LOGGER.info("1b: Show that no indicator lights were set by the basic file.");
+		assertLeds(facility, "A78", 0, 0);
+		assertLeds(facility, "A78.B1", 0, 0);
+
 		commitTransaction();
 
 		LOGGER.info("2: Directly call the API to set tiers as we want it.");
@@ -3209,7 +3220,7 @@ public class AisleImporterTest extends MockDaoTest {
 		// tier8 starts are 45,54,64,72,80. so lets set the same for T7
 		logSlotLedParameters(tier8);
 		// see 43,42,false,4,"45/54/64/72/80" in the consol
-		tier7.setSlotTierLEDs( 43,42,false,4,"45/54/64/72/80");
+		tier7.setSlotTierLEDs(43, 42, false, 4, "45/54/64/72/80");
 		logSlotLedParameters(tier7);
 		logTierLeds(tier7);
 		// show that T8 and T7 are the same
@@ -3217,11 +3228,25 @@ public class AisleImporterTest extends MockDaoTest {
 		assertLeds(facility, "A78.B1.T7.S5", 45, 48);
 		assertLeds(facility, "A78.B1.T8.S1", 80, 83);
 		assertLeds(facility, "A78.B1.T8.S5", 45, 48);
+
+		assertLeds(facility, "A78.B1", 0, 0);
+		Bay bay1 = (Bay) facility.findSubLocationById("A78.B1");
+		Aisle aisle78 = (Aisle) facility.findSubLocationById("A78");
+		bay1.setIndicatorLedValuesInteger(4, 6);
+		aisle78.setIndicatorLedValuesInteger(14, 16);
+		tier5.setIndicatorLedValuesInteger(24, 26);
 		commitTransaction();
 
 		beginTransaction();
 		facility = facility.reload();
-		// This is tweaked
+		assertLeds(facility, "A78.B1", 4, 6);
+		assertLeds(facility, "A78", 14, 16);
+		assertLeds(facility, "A78.B1.T5", 24, 26);
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+		// Does reload clear out what was set before?
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A78,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,144,,,,\r\n" //
@@ -3234,8 +3259,10 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T7,,5,42,160,,\r\n" //
 				+ "Tier,T8,,5,42,180,,\r\n" //
 				+ "Tier,T9,,5,42,210,,\r\n";//
+				// + "Function,SetIndicators,A78.B1,4,6,\r\n";//
 
 		importAislesData(facility, csvString2);
+		assertLeds(facility, "A78.B1", 0, 0);
 		commitTransaction();
 
 	}
@@ -3249,6 +3276,9 @@ public class AisleImporterTest extends MockDaoTest {
 		}
 	}
 
+	/**
+	 * Main purpose is to produce the parameters for a call to setSlotTierLEDs(). See it in the console
+	 */
 	private void logSlotLedParameters(Tier inTier) {
 		int firstLed = inTier.getFirstLedNumAlongPath();
 		int totalLed = inTier.getLastLedNumAlongPath() - firstLed + 1;
@@ -3256,11 +3286,11 @@ public class AisleImporterTest extends MockDaoTest {
 		String slotStarts = "";
 		int ledsPerSlot = 0;
 		List<Slot> slots = inTier.getSlotsInDomainIdOrder();
-		if (!increaseFromAnchor){
+		if (!increaseFromAnchor) {
 			Collections.reverse(slots);
 		}
 		for (Slot slot : slots) {
-			slotStarts +=  "/" + slot.getFirstLedNumAlongPath();
+			slotStarts += "/" + slot.getFirstLedNumAlongPath();
 			ledsPerSlot = slot.getLastLedNumAlongPath() - slot.getFirstLedNumAlongPath() + 1;
 		}
 		// strip off the first 
@@ -3268,7 +3298,7 @@ public class AisleImporterTest extends MockDaoTest {
 		slotStarts = "\"" + slotStarts + "\"";
 
 		LOGGER.info("{} setSlotTierLEDs parameters", inTier);
-		LOGGER.info("{},{},{},{},{}", firstLed,totalLed, increaseFromAnchor,ledsPerSlot, slotStarts);
+		LOGGER.info("{},{},{},{},{}", firstLed, totalLed, increaseFromAnchor, ledsPerSlot, slotStarts);
 		/*setSlotTierLEDs(int inTierStartLed,
 			int inLedCountTier,
 			boolean inLowerLedNearAnchor,
