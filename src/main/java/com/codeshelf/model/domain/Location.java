@@ -1677,4 +1677,35 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			locName = getNominalLocationIdExcludeBracket();
 		return locName;
 	}
+	
+	/**
+	 *  Used to set indicators. Known use cases for bay or aisle. Tier is conceivable. Slot probably not, although
+	 *  this could be used to just for a slot. Also see Tier.setSlotTierLEDs() for somewhat generic way to set slots for a tier.
+	 *  Note: this does not set lowerLedNearAnchor, which should not be relevant for the indicator situation.
+	 *  This must be in a transaction.
+	 */
+	public void setIndicatorLedValues(Short firstLedValue, Short secondLedValue){
+		// both null or both not null
+		if ((firstLedValue == null) != (secondLedValue == null)){
+			LOGGER.error("Bad values in setIndicatorLedValues. One null and other not.");
+			return;
+		}
+		// second may be equal to first, but not less
+		if ((firstLedValue != null) && (secondLedValue < firstLedValue)){
+			LOGGER.error("Bad values in setIndicatorLedValues. Second may not be less than first");
+			return;
+		}
+		this.setFirstLedNumAlongPath(firstLedValue);
+		this.setLastLedNumAlongPath(secondLedValue);
+		this.getDao().store(this);
+	}
+	
+	/**
+	 * Convenience API
+	 */
+	public void setIndicatorLedValuesInteger(int firstLedValue, int secondLedValue){
+		// these cannot be null. May cast
+		setIndicatorLedValues((short)firstLedValue, (short)secondLedValue);
+	}
+
 }
