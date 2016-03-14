@@ -163,7 +163,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	@Getter
 	@Setter
-	private SiteControllerRole							siteControllerRole			 = SiteControllerRole.STANDBY;
+	private SiteControllerRole							siteControllerRole			 = SiteControllerRole.NETWORK_PRIMARY;
 
 	@Getter
 	CsClientEndpoint									clientEndpoint;
