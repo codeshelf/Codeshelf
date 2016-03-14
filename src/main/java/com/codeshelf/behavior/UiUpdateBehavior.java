@@ -1,6 +1,7 @@
 package com.codeshelf.behavior;
 
 import java.sql.Timestamp;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -45,6 +46,8 @@ import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.codeshelf.ws.protocol.message.PosConSetupMessage;
 import com.codeshelf.ws.protocol.message.PropertyChangeMessage;
+import com.codeshelf.ws.protocol.message.SiteControllerOperationMessage;
+import com.codeshelf.ws.protocol.message.SiteControllerOperationMessage.SiteControllerTask;
 import com.codeshelf.ws.protocol.message.PosConLightAddressesMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.Strings;
@@ -386,12 +389,31 @@ public class UiUpdateBehavior implements IApiBehavior {
 		if (controller == null) {
 			FormUtility.throwUiValidationException("Site Controller", "Server Error: Site Controller " + uuid + " not found", ErrorCode.GENERAL);
 		}
-		CodeshelfNetwork network = validateSiteControllerParams(controller.getFacility(), domainId, location, networkDomainId);
-
-		controller.setParent(network);
-		controller.setDomainId(domainId);
-		controller.setLocation(location);
-		SiteController.staticGetDao().store(controller);
+		if (!controller.getDomainId().equals(domainId)){
+			//If site controller's domain id was changed, delete the old site controller and create a new one
+			addSiteController(controller.getFacility().getPersistentId().toString(), domainId, location, networkDomainId);
+			deleteSiteController(uuid);
+		} else {
+			CodeshelfNetwork prevNetwork = controller.getParent();
+			CodeshelfNetwork network = validateSiteControllerParams(controller.getFacility(), domainId, location, networkDomainId);
+			
+			if (!prevNetwork.equals(network)){ 
+				controller.setRole(SiteControllerRole.STANDBY);
+				prevNetwork.removeSiteController(controller.getDomainId());
+				network.addSiteController(controller);
+			}
+			controller.setLocation(location);
+			SiteController.staticGetDao().store(controller);
+			
+			//Restart the modified site controller.
+			SiteControllerOperationMessage shutdownMessage = new SiteControllerOperationMessage(SiteControllerTask.SHUTDOWN);
+			Set<User> users = new HashSet<>();
+			User user = controller.getUser();
+			if (user != null) {
+				users.add(user);
+			}
+			WebSocketManagerService.getInstance().sendMessage(users, shutdownMessage);			
+		}
 	}
 	
 	public void addSiteController(String facilityUUID, String domainId, String location, String networkDomainId){
@@ -433,9 +455,39 @@ public class UiUpdateBehavior implements IApiBehavior {
 	
 	public void deleteSiteController(String uuid){
 		SiteController controller = SiteController.staticGetDao().findByPersistentId(uuid);
-		if (controller != null) {
-			controller.getParent().removeSiteController(controller.getDomainId());
+		if (controller == null) {
+			FormUtility.throwUiValidationException("Site Controller", "Server Error: Site Controller " + uuid + " not found", ErrorCode.GENERAL);
 		}
+
+		controller.getParent().removeSiteController(controller.getDomainId());
+		Set<User> users = new HashSet<>();
+		User user = controller.getUser();
+		if (user != null) {
+			users.add(user);
+		}
+		SiteControllerOperationMessage shutdownMessage = new SiteControllerOperationMessage(SiteControllerTask.SHUTDOWN);
+		WebSocketManagerService.getInstance().sendMessage(users, shutdownMessage);
+	}
+	
+	public void makeSiteControllerPrimaryForNetwork(String uuid){
+		SiteController controller = SiteController.staticGetDao().findByPersistentId(uuid);
+		if (controller == null) {
+			FormUtility.throwUiValidationException("Site Controller", "Server Error: Site Controller " + uuid + " not found", ErrorCode.GENERAL);
+		}
+
+		//Update all site controllers on the network
+		CodeshelfNetwork network = controller.getParent();
+		for (SiteController c : network.getSiteControllers().values()) {
+			if (controller.equals(c)){
+				c.setRole(SiteControllerRole.NETWORK_PRIMARY);
+			} else {
+				c.setRole(SiteControllerRole.STANDBY);
+			}
+			SiteController.staticGetDao().store(c);
+		}
+		
+		SiteControllerOperationMessage shutdownMessage = new SiteControllerOperationMessage(SiteControllerTask.SHUTDOWN);
+		WebSocketManagerService.getInstance().sendMessage(network.getSiteControllerUsers(), shutdownMessage);
 	}
 
 }

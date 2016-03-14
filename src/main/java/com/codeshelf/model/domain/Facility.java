@@ -44,7 +44,6 @@ import com.codeshelf.edi.IEdiGateway;
 import com.codeshelf.edi.IEdiImportGateway;
 import com.codeshelf.edi.WorkInstructionCsvBean;
 import com.codeshelf.manager.User;
-import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.EdiGatewayStateEnum;
 import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.HeaderCounts;
@@ -61,7 +60,8 @@ import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.util.UomNormalizer;
-import com.codeshelf.ws.protocol.message.DisconnectSiteControllerMessage;
+import com.codeshelf.ws.protocol.message.SiteControllerOperationMessage;
+import com.codeshelf.ws.protocol.message.SiteControllerOperationMessage.SiteControllerTask;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -1180,25 +1180,10 @@ public class Facility extends Location {
 		return outHeaderCounts;
 	}
 
-	private Set<SiteController> getSiteControllers() {
-		Set<SiteController> siteControllers = new HashSet<SiteController>();
-
-		for (CodeshelfNetwork network : this.getNetworks()) {
-			siteControllers.addAll(network.getSiteControllers().values());
-		}
-		return siteControllers;
-	}
-
 	public Set<User> getSiteControllerUsers() {
 		Set<User> users = new HashSet<User>();
-
-		for (SiteController sitecon : this.getSiteControllers()) {
-			User user = TenantManagerService.getInstance().getUser(sitecon.getDomainId());
-			if (user != null) {
-				users.add(user);
-			} else {
-				LOGGER.warn("Couldn't find user for site controller " + sitecon.getDomainId());
-			}
+		for (CodeshelfNetwork network : this.getNetworks()) {
+			users.addAll(network.getSiteControllerUsers());
 		}
 		return users;
 	}
@@ -1333,7 +1318,7 @@ public class Facility extends Location {
 		List<Facility> facilities = Facility.staticGetDao().getAll();
 		for (Facility facility : facilities) {
 			Set<User> users = facility.getSiteControllerUsers();
-			DisconnectSiteControllerMessage disconnectMessage = new DisconnectSiteControllerMessage();
+			SiteControllerOperationMessage disconnectMessage = new SiteControllerOperationMessage(SiteControllerTask.DISCONNECT_DEVICES);
 			webSocketManagerService.sendMessage(users, disconnectMessage);
 		}
 		//The "location" table contains the Facility. All objects we want to delete are descendants of the Facility
@@ -1344,7 +1329,7 @@ public class Facility extends Location {
 	public void delete(WebSocketManagerService webSocketManagerService) {
 		Set<User> users = getSiteControllerUsers();
 		delete();
-		DisconnectSiteControllerMessage disconnectMessage = new DisconnectSiteControllerMessage();
+		SiteControllerOperationMessage disconnectMessage = new SiteControllerOperationMessage(SiteControllerTask.DISCONNECT_DEVICES);
 		webSocketManagerService.sendMessage(users, disconnectMessage);
 	}
 

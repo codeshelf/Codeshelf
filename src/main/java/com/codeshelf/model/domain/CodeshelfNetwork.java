@@ -6,7 +6,9 @@
 package com.codeshelf.model.domain;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
@@ -27,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.manager.User;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
@@ -313,6 +316,16 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		} else {
 			LOGGER.error("Tried to create Site Controller " + username + " but it already exists");
 		}
-
+	}
+	
+	public Set<User> getSiteControllerUsers(){
+		Set<User> users = new HashSet<>();
+		for (SiteController controller : siteControllers.values()){
+			User user = controller.getUser();
+			if (user != null) {
+				users.add(user);
+			}
+		}
+		return users;
 	}
 }

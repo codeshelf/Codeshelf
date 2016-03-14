@@ -16,6 +16,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.User;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -37,7 +39,6 @@ public class SiteController extends WirelessDeviceABC {
 		}
 	}
 
-	@SuppressWarnings("unused")
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(SiteController.class);
 
 	// Monitor/alert enabled for this equipment's online status (for equipment that is expected to be left on)
@@ -103,14 +104,12 @@ public class SiteController extends WirelessDeviceABC {
 		setDescription("Site Controller for " + location);
 	}
 	
-	public void makePrimaryForNetwork(){
-		CodeshelfNetwork network = getParent();
-		for (SiteController controller : network.getSiteControllers().values()) {
-			if (this.equals(controller)){
-				controller.setRole(SiteControllerRole.NETWORK_PRIMARY);
-			} else {
-				controller.setRole(SiteControllerRole.STANDBY);
-			}
+	public User getUser(){
+		User user = TenantManagerService.getInstance().getUser(getDomainId());
+		if (user == null) {
+			LOGGER.warn("Couldn't find user for site controller " + getDomainId());
 		}
+		return user;
 	}
+
 }

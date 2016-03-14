@@ -87,6 +87,7 @@ public class LoginCommand extends CommandABC<LoginRequest> {
 
 						CodeshelfNetwork network = null;
 						if (sitecon != null) {
+							response.setSiteControllerRole(sitecon.getRole());
 							network = sitecon.getParent();
 
 							// ensure all collections are loaded, because hibernate session

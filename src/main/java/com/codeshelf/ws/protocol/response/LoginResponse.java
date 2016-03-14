@@ -6,6 +6,7 @@ import lombok.Setter;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Organization;
+import com.codeshelf.model.domain.SiteController.SiteControllerRole;
 
 public class LoginResponse extends ResponseABC {
 	@Getter
@@ -67,8 +68,11 @@ public class LoginResponse extends ResponseABC {
 	@Getter
 	@Setter
 	String				protocol;
+	
+	@Getter
+	@Setter
+	SiteControllerRole	siteControllerRole;
 
 	public LoginResponse() {
 	}
-
 }
