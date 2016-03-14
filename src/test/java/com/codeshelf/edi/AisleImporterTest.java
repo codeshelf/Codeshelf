@@ -3199,7 +3199,7 @@ public class AisleImporterTest extends MockDaoTest {
 		assertLeds(facility, "A78.B1.T7.S5", 122, 125);
 		assertLeds(facility, "A78.B1.T1.S1", 339, 342);
 		assertLeds(facility, "A78.B1.T1.S5", 374, 377);
-		
+
 		LOGGER.info("1b: Show that no indicator lights were set by the basic file.");
 		assertLeds(facility, "A78", 0, 0);
 		assertLeds(facility, "A78.B1", 0, 0);
@@ -3259,10 +3259,79 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T7,,5,42,160,,\r\n" //
 				+ "Tier,T8,,5,42,180,,\r\n" //
 				+ "Tier,T9,,5,42,210,,\r\n";//
-				// + "Function,SetIndicators,A78.B1,4,6,\r\n";//
+		// + "Function,SetIndicators,A78.B1,4,6,\r\n";//
 
 		importAislesData(facility, csvString2);
 		assertLeds(facility, "A78.B1", 0, 0);
+		commitTransaction();
+
+	}
+
+	/**
+	 * Vans has indicator LED only for bays
+	 */
+	@Test
+	public final void testVansBayIndicators() {
+		beginTransaction();
+
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A77,,,,,tierB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,244,,,,\r\n" //
+				+ "Tier,T1,,5,0,10,,\r\n" //
+				+ "Tier,T2,,5,0,60,,\r\n" //
+				+ "Tier,T3,,5,0,110,,\r\n" //
+				+ "Tier,T4,,5,0,160,,\r\n" //
+				+ "Tier,T5,,5,0,210,,\r\n" //
+				+ "Bay,B2,Clone(B1),,,,,,,,\r\n" //
+				+ "Aisle,A76,Clone(A77),,,,,12.85,48.45,X,120\r\n"//
+				+ "Aisle,A75,,,,,tierB1S1Side,12.85,53.45,X,120\r\n" //
+				+ "Bay,B1,244,,,,\r\n" //
+				+ "Tier,T1,,5,0,10,,\r\n" //
+				+ "Tier,T2,,5,0,60,,\r\n" //
+				+ "Tier,T3,,5,0,110,,\r\n" //
+				+ "Tier,T4,,5,0,160,,\r\n" //
+				+ "Tier,T5,,5,0,210,,\r\n" //
+				+ "Function,SetIndicators,A77.B1,4,6,\r\n";//
+
+		Facility facility = Facility.createFacility("F-77", "TEST", Point.getZeroPoint());
+		importAislesData(facility, csvString);
+		assertLeds(facility, "A77.B1", 4, 6);
+		commitTransaction();
+
+		LOGGER.info("1: Check the end slots LEDs without any funny business.");
+		beginTransaction();
+		facility = facility.reload();
+		assertLeds(facility, "A77.B1.T5", 0, 0);
+
+		commitTransaction();
+
+		LOGGER.info("2: Directly call the API to bay indicator as we want it.");
+		beginTransaction();
+		facility = facility.reload();
+
+		// The function call set this
+		assertLeds(facility, "A77.B1", 4, 6);
+		
+		// 
+		Bay bay77_1 = (Bay) facility.findSubLocationById("A77.B1");
+		Assert.assertNotNull(bay77_1);
+		bay77_1.setIndicatorLedValuesInteger(5, 7);
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+		assertLeds(facility, "A77.B1", 5, 7);
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+		// Does reload clear out what was set before?
+
+		importAislesData(facility, csvString);
+		// function put 77B1 back.  See that neither 76B1 nor 77B2 picked up from the cloen
+		assertLeds(facility, "A77.B1", 4, 6);
+		assertLeds(facility, "A76.B1", 0, 0);
+		assertLeds(facility, "A77.B2", 0, 0);
 		commitTransaction();
 
 	}

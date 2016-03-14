@@ -579,14 +579,14 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		if (inAisle.getFirstLedNumAlongPath() != null || inAisle.getLastLedNumAlongPath() != null) {
 			inAisle.setIndicatorLedValues(null, null);
 		}
-		for (Location bay: inAisle.getChildren()){
+		for (Location bay : inAisle.getChildren()) {
 			if (bay.getFirstLedNumAlongPath() != null || bay.getLastLedNumAlongPath() != null) {
 				bay.setIndicatorLedValues(null, null);
-			}		
-		}		
+			}
+		}
 	}
 
-		// --------------------------------------------------------------------------
+	// --------------------------------------------------------------------------
 	/**
 	 * @param inAisle
 	 */
@@ -1574,6 +1574,23 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				throw new EdiFileReadException("Tier not created. Unknown error");
 			}
 
+		} else if (binType.equalsIgnoreCase("function")) {
+			String functionName = getFunctionName(inCsvBean);
+			if ("SetIndicators".equalsIgnoreCase(functionName)) {
+				String locationName = getFunctionStringParameter(1, inCsvBean);
+				Location loc = mFacility.findSubLocationById(locationName);
+				if (loc == null) {
+					LOGGER.error("unknown location name {} for {}", locationName, functionName);
+				}
+				int lowLed = getFunctionIntParameter(2, inCsvBean);
+				int highLed = getFunctionIntParameter(3, inCsvBean);
+				loc.setIndicatorLedValuesInteger(lowLed, highLed);
+			}
+			else {
+				LOGGER.error("unimplemented function name {}", functionName);
+			}
+
+			return false;
 		} else {
 			throw new EdiFileReadException("Unknown bin type");
 		}
@@ -1584,6 +1601,46 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	@Override
 	protected Set<EventTag> getEventTagsForImporter() {
 		return EnumSet.of(EventTag.IMPORT, EventTag.LOCATION);
+	}
+
+	/**
+	 * if "function" then the function name is the second value in the bean, or the zeroth parameter.
+	 */
+	private String getFunctionName(AislesFileCsvBean inCsvBean) {
+		return getFunctionStringParameter(0, inCsvBean);
+	}
+
+	private int getFunctionIntParameter(int inParameterNumber, AislesFileCsvBean inCsvBean) {
+		String param = getFunctionStringParameter(inParameterNumber, inCsvBean);
+		try {
+			return Integer.parseInt(param);
+		}
+		catch (NumberFormatException e) {
+			LOGGER.error("Bad numeral {} for function argument", param);
+		}
+		return 0;
+	}
+	
+	private String getFunctionStringParameter(int inParameterNumber, AislesFileCsvBean inCsvBean) {
+		// After function, functionName, there are the parameters
+		switch (inParameterNumber) {
+			case 0:
+				return inCsvBean.getNominalDomainID();
+			case 1:
+				return inCsvBean.getLengthCm();
+			case 2:
+				return inCsvBean.getSlotsInTier();
+			case 3:
+				return inCsvBean.getLedCountInTier();
+			case 4:
+				return inCsvBean.getTierFloorCm();
+			case 5:
+				return inCsvBean.getControllerLed();
+			default: {
+				LOGGER.error("getFunctionParameter() undefined for parameter {}", inParameterNumber);
+			}
+		}
+		return "";
 	}
 
 }
