@@ -9,7 +9,6 @@ import com.codeshelf.application.ContextLogging;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.SiteController.SiteControllerRole;
 import com.codeshelf.ws.client.CsClientEndpoint;
 import com.codeshelf.ws.protocol.command.CommandABC;
 import com.codeshelf.ws.protocol.command.PingCommand;
@@ -102,11 +101,9 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 						deviceManager.setSequenceKind(loginResponse.getSequenceKind());
 						deviceManager.setOrdersubValue(loginResponse.getOrdersubValue());
 						deviceManager.getRadioController().setProtocolVersion(loginResponse.getProtocol());
-						//Only attach devices to site controlles that are primary within their networks
-						if (loginResponse.getSiteControllerRole() == SiteControllerRole.NETWORK_PRIMARY){
-							// attached has the huge side effect of getting all CHEs and setting up device logic for them. Better have the config values first.
-							deviceManager.attached(network);
-						}
+						deviceManager.setSiteControllerRole(loginResponse.getSiteControllerRole());
+						// attached has the huge side effect of getting all CHEs and setting up device logic for them. Better have the config values first.
+						deviceManager.attached(network);
 					} else {
 						LOGGER.error("loginResponse has no network");
 					}

@@ -42,6 +42,7 @@ import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.LedController;
+import com.codeshelf.model.domain.SiteController.SiteControllerRole;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
@@ -161,8 +162,12 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	private String										ordersubValue				= "Disabled";
 
 	@Getter
+	@Setter
+	private SiteControllerRole							siteControllerRole			 = SiteControllerRole.STANDBY;
+
+	@Getter
 	CsClientEndpoint									clientEndpoint;
-	
+		
 	@Inject
 	public CsDeviceManager(final IRadioController inRadioController, final CsClientEndpoint clientEndpoint) {
 		this.clientEndpoint = clientEndpoint;
@@ -933,6 +938,11 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	}
 
 	public void updateNetwork(CodeshelfNetwork network) {
+		if (getSiteControllerRole() != SiteControllerRole.NETWORK_PRIMARY){
+			LOGGER.warn("Site Controller " + getUsername() + " is " + getSiteControllerRole() + ". Skipping updateNetwork() call");
+			return;
+		}
+		
 		Set<UUID> updateDevices = new HashSet<UUID>();
 		// update network devices
 		LOGGER.info("updateNetwork() called. Creating or updating deviceLogic for each CHE");

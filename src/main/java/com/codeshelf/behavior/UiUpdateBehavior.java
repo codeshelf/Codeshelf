@@ -401,18 +401,19 @@ public class UiUpdateBehavior implements IApiBehavior {
 				controller.setRole(SiteControllerRole.STANDBY);
 				prevNetwork.removeSiteController(controller.getDomainId());
 				network.addSiteController(controller);
+
+				//Restart the modified site controller.
+				SiteControllerOperationMessage shutdownMessage = new SiteControllerOperationMessage(SiteControllerTask.SHUTDOWN);
+				Set<User> users = new HashSet<>();
+				User user = controller.getUser();
+				if (user != null) {
+					users.add(user);
+				}
+				WebSocketManagerService.getInstance().sendMessage(users, shutdownMessage);			
 			}
+			//Modify location. But, if location was the only thing that changed, no need to restart site controller
 			controller.setLocation(location);
-			SiteController.staticGetDao().store(controller);
-			
-			//Restart the modified site controller.
-			SiteControllerOperationMessage shutdownMessage = new SiteControllerOperationMessage(SiteControllerTask.SHUTDOWN);
-			Set<User> users = new HashSet<>();
-			User user = controller.getUser();
-			if (user != null) {
-				users.add(user);
-			}
-			WebSocketManagerService.getInstance().sendMessage(users, shutdownMessage);			
+			SiteController.staticGetDao().store(controller);			
 		}
 	}
 	
