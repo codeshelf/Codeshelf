@@ -460,13 +460,7 @@ public class UiUpdateBehavior implements IApiBehavior {
 		}
 
 		controller.getParent().removeSiteController(controller.getDomainId());
-		Set<User> users = new HashSet<>();
-		User user = controller.getUser();
-		if (user != null) {
-			users.add(user);
-		}
-		SiteControllerOperationMessage shutdownMessage = new SiteControllerOperationMessage(SiteControllerTask.SHUTDOWN);
-		WebSocketManagerService.getInstance().sendMessage(users, shutdownMessage);
+		restartSiteController(uuid);
 	}
 	
 	public void makeSiteControllerPrimaryForNetwork(String uuid){
@@ -490,4 +484,18 @@ public class UiUpdateBehavior implements IApiBehavior {
 		WebSocketManagerService.getInstance().sendMessage(network.getSiteControllerUsers(), shutdownMessage);
 	}
 
+	public void restartSiteController(String uuid){
+		SiteController controller = SiteController.staticGetDao().findByPersistentId(uuid);
+		if (controller == null) {
+			FormUtility.throwUiValidationException("Site Controller", "Server Error: Site Controller " + uuid + " not found", ErrorCode.GENERAL);
+		}
+
+		Set<User> users = new HashSet<>();
+		User user = controller.getUser();
+		if (user != null) {
+			users.add(user);
+		}
+		SiteControllerOperationMessage shutdownMessage = new SiteControllerOperationMessage(SiteControllerTask.SHUTDOWN);
+		WebSocketManagerService.getInstance().sendMessage(users, shutdownMessage);
+	} 
 }

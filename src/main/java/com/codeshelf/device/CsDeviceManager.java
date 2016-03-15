@@ -712,7 +712,11 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	public void attached(CodeshelfNetwork network) {
 		LOGGER.info("Attached to server");
 		this.updateNetwork(network);
-		this.startRadio(network);
+		if (getSiteControllerRole() == SiteControllerRole.NETWORK_PRIMARY){
+			this.startRadio(network);
+		} else {
+			LOGGER.warn("Site Controller " + getUsername() + " is " + getSiteControllerRole() + ". Skipping startRadio() call");
+		}
 
 		isAttachedToServer = true;
 		for (INetworkDevice networkDevice : mDeviceMap.values()) {
@@ -939,6 +943,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	public void updateNetwork(CodeshelfNetwork network) {
 		if (getSiteControllerRole() != SiteControllerRole.NETWORK_PRIMARY){
+			this.lastNetworkUpdate = System.currentTimeMillis();
 			LOGGER.warn("Site Controller " + getUsername() + " is " + getSiteControllerRole() + ". Skipping updateNetwork() call");
 			return;
 		}

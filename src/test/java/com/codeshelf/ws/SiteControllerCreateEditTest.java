@@ -9,12 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.UiUpdateBehavior;
-import com.codeshelf.integration.CheProcessPickExceptions;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.SiteController;
 import com.codeshelf.model.domain.SiteController.SiteControllerRole;
-import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.validation.InputValidationException;
 
@@ -168,14 +166,14 @@ public class SiteControllerCreateEditTest extends ServerTest{
 		Assert.assertEquals(SiteControllerRole.STANDBY, sc5002.getRole());
 		Assert.assertEquals(SiteControllerRole.STANDBY, sc5003.getRole());
 		
-		LOGGER.info("2. Make the sole site controller on the new network primary");
+		LOGGER.info("3. Make the sole site controller on the new network primary");
 		uiUpdate.makeSiteControllerPrimaryForNetwork(sc5003.getPersistentId().toString());
 		Assert.assertEquals(SiteControllerRole.NETWORK_PRIMARY, sc5000.getRole());
 		Assert.assertEquals(SiteControllerRole.STANDBY, sc5001.getRole());
 		Assert.assertEquals(SiteControllerRole.STANDBY, sc5002.getRole());
 		Assert.assertEquals(SiteControllerRole.NETWORK_PRIMARY, sc5003.getRole());
 
-		LOGGER.info("3. Select a new primary site controller on the old network");
+		LOGGER.info("4. Select a new primary site controller on the old network");
 		uiUpdate.makeSiteControllerPrimaryForNetwork(sc5001.getPersistentId().toString());
 		Assert.assertEquals(SiteControllerRole.STANDBY, sc5000.getRole());
 		Assert.assertEquals(SiteControllerRole.NETWORK_PRIMARY, sc5001.getRole());
@@ -187,9 +185,22 @@ public class SiteControllerCreateEditTest extends ServerTest{
 	
 	@Test
 	public void testSecondarySiteControllerDeviceConnections(){
+		LOGGER.info("1. Make SiteController STANDBY");
 		beginTransaction();
-		//Facility facility = getFacility();
-		
+		Facility facility = getFacility();
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		SiteController controller = network.getSiteController("5000");
+		controller.setRole(SiteControllerRole.STANDBY);
+		SiteController.staticGetDao().store(controller);
 		commitTransaction();
+		
+		LOGGER.info("2. Ensure that SiteController doesn't have CHEs");
+		startSiteController();
+		try {
+			createPickSim(cheGuid1);
+			throw new Exception("Should not have found CHE in the Site Controller");
+		} catch (Exception e) {
+			Assert.assertEquals("No che found with guid: 0x00009991", e.getMessage());
+		}
 	}
 }
