@@ -69,6 +69,7 @@ public abstract class CRUDResource<T extends IDomainObjectTree<P>, P extends IDo
 	}
 	
 	@POST
+	@Consumes("application/x-www-form-urlencoded")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response create(MultivaluedMap<String, String> params) throws EntityExistsException {
 		SecurityUtils.getSubject().checkPermission(permissionPrefix + ":create");
