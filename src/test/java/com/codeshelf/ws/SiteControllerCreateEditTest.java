@@ -38,6 +38,7 @@ public class SiteControllerCreateEditTest extends ServerTest{
 		Assert.assertNotNull(controller);
 		Assert.assertEquals("5001", controller.getDomainId());
 		Assert.assertEquals(SiteControllerRole.STANDBY, controller.getRole());
+		Assert.assertFalse(controller.getUserExists());
 		Assert.assertEquals("Test Location", controller.getLocation());
 		Assert.assertEquals("Site Controller for Test Location", controller.getDescription());
 		Assert.assertEquals(network, controller.getParent());

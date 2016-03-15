@@ -112,4 +112,7 @@ public class SiteController extends WirelessDeviceABC {
 		return user;
 	}
 
+	public boolean getUserExists(){
+		return getUser() != null;
+	}
 }
