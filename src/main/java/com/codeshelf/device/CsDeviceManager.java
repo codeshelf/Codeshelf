@@ -712,11 +712,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	public void attached(CodeshelfNetwork network) {
 		LOGGER.info("Attached to server");
 		this.updateNetwork(network);
-		if (getSiteControllerRole() == SiteControllerRole.NETWORK_PRIMARY){
-			this.startRadio(network);
-		} else {
-			LOGGER.warn("Site Controller " + getUsername() + " is " + getSiteControllerRole() + ". Skipping startRadio() call");
-		}
+		this.startRadio(network);
 
 		isAttachedToServer = true;
 		for (INetworkDevice networkDevice : mDeviceMap.values()) {
