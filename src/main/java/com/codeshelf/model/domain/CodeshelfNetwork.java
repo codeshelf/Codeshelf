@@ -203,6 +203,21 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 					+ " because it isn't found in children");
 		}
 	}
+	
+	/**
+	 * Calling removeSiteController() deleted the SiteSontroller object due to an orphanRemoval flag
+	 * Calling this method allows moving SC from one network to another 
+	 * by first, attaching it to the new network, and then removing from the old one 
+	 */
+	public void stealSiteController(SiteController inSiteController) {
+		CodeshelfNetwork previousNetwork = inSiteController.getParent();
+		siteControllers.put(inSiteController.getDomainId(), inSiteController);
+		inSiteController.setParent(this);
+		if (previousNetwork != null) {
+			previousNetwork.siteControllers.remove(inSiteController.getDomainId());
+		}
+		SiteController.staticGetDao().store(inSiteController);
+	}
 
 	public void addLedController(LedController inLedController) {
 		CodeshelfNetwork previousNetwork = inLedController.getParent();

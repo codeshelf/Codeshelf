@@ -399,8 +399,7 @@ public class UiUpdateBehavior implements IApiBehavior {
 			
 			if (!prevNetwork.equals(network)){ 
 				controller.setRole(SiteControllerRole.STANDBY);
-				prevNetwork.removeSiteController(controller.getDomainId());
-				network.addSiteController(controller);
+				network.stealSiteController(controller);
 
 				//Restart the modified site controller.
 				SiteControllerOperationMessage shutdownMessage = new SiteControllerOperationMessage(SiteControllerTask.SHUTDOWN);
