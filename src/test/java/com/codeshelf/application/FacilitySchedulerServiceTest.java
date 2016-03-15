@@ -133,7 +133,7 @@ public class FacilitySchedulerServiceTest {
 			Thread.sleep(3000);
 			int newTotal = TestJob.runCount;
 			Assert.assertTrue("should have resumed", newTotal > total);
-			Assert.assertTrue("should have run about 6 times but was " + (newTotal - total), newTotal - total < 7);
+			Assert.assertTrue("should have run no more than 7 times but was " + (newTotal - total), newTotal - total <= 7);
 		}
 		finally {
 			TestJob.BlockingJobs = true;
