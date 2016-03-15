@@ -501,7 +501,7 @@ public class Tier extends Location {
 	 * Must be in a transaction already
 	 * inSlotStartingLeds string has the easily parseable form of "2/25/27/42"
 	 */
-	public void setSlotTierLEDs(int inTierStartLed,
+	public void setSlotTierLeds(int inTierStartLed,
 		int inLedCountTier,
 		boolean inLowerLedNearAnchor,
 		int inLedsPerSlot,
@@ -563,4 +563,53 @@ public class Tier extends Location {
 		Collections.sort(slotList, new SlotIDComparator());
 		return slotList;
 	}
+
+	private int intFromShort(Short inShort) {
+		if (inShort == null)
+			return 0;
+		else
+			return (int) inShort;
+	}
+
+	/**
+	 * Main purpose is to produce the parameters for a call to setSlotTierLEDs(). See it in the console or log
+	 */
+	public void logSlotTierLedParameters() {
+		int firstLed = intFromShort(getFirstLedNumAlongPath());
+		int lastLed = intFromShort(getLastLedNumAlongPath());
+		
+		int totalLed = 0;
+		if (firstLed > 0)
+			totalLed = lastLed - firstLed + 1;
+		boolean increaseFromAnchor = isLowerLedNearAnchor();
+		String increaseStr = "N";
+		if (increaseFromAnchor)
+			increaseStr = "Y";
+		String slotStarts = "";
+		int ledsPerSlot = 0;
+		List<Slot> slots = getSlotsInDomainIdOrder();
+		if (!increaseFromAnchor) {
+			Collections.reverse(slots);
+		}
+		for (Slot slot : slots) {
+			slotStarts += "/" + slot.getFirstLedNumAlongPath();
+			ledsPerSlot = intFromShort(slot.getLastLedNumAlongPath()) - intFromShort(slot.getFirstLedNumAlongPath()) + 1;
+		}
+		// strip off the first 
+		slotStarts = slotStarts.substring(1);
+
+		LOGGER.info("function,setSlotTierLEDs,{},{},{},{},{},{}",
+			this,
+			firstLed,
+			totalLed,
+			increaseStr,
+			ledsPerSlot,
+			slotStarts);
+		/*setSlotTierLEDs(int inTierStartLed,
+			int inLedCountTier,
+			boolean inLowerLedNearAnchor,
+			int inLedsPerSlot,
+			String inSlotStartingLeds) */
+	}
+
 }

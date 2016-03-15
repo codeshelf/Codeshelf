@@ -1574,22 +1574,10 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				throw new EdiFileReadException("Tier not created. Unknown error");
 			}
 
+		} else if (binType.equalsIgnoreCase("end")) {
+			return false;
 		} else if (binType.equalsIgnoreCase("function")) {
-			String functionName = getFunctionName(inCsvBean);
-			if ("SetIndicators".equalsIgnoreCase(functionName)) {
-				String locationName = getFunctionStringParameter(1, inCsvBean);
-				Location loc = mFacility.findSubLocationById(locationName);
-				if (loc == null) {
-					LOGGER.error("unknown location name {} for {}", locationName, functionName);
-				}
-				int lowLed = getFunctionIntParameter(2, inCsvBean);
-				int highLed = getFunctionIntParameter(3, inCsvBean);
-				loc.setIndicatorLedValuesInteger(lowLed, highLed);
-			}
-			else {
-				LOGGER.error("unimplemented function name {}", functionName);
-			}
-
+			callAislesFileFunction(inCsvBean);
 			return false;
 		} else {
 			throw new EdiFileReadException("Unknown bin type");
@@ -1614,15 +1602,15 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		String param = getFunctionStringParameter(inParameterNumber, inCsvBean);
 		try {
 			return Integer.parseInt(param);
-		}
-		catch (NumberFormatException e) {
-			LOGGER.error("Bad numeral {} for function argument", param);
+		} catch (NumberFormatException e) {
+			LOGGER.warn("Bad numeral {} for function argument", param);
 		}
 		return 0;
 	}
-	
+
 	private String getFunctionStringParameter(int inParameterNumber, AislesFileCsvBean inCsvBean) {
 		// After function, functionName, there are the parameters
+		// parameter 6 is the 8th column.
 		switch (inParameterNumber) {
 			case 0:
 				return inCsvBean.getNominalDomainID();
@@ -1636,11 +1624,64 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				return inCsvBean.getTierFloorCm();
 			case 5:
 				return inCsvBean.getControllerLed();
+			case 6:
+				return inCsvBean.getAnchorX();
 			default: {
 				LOGGER.error("getFunctionParameter() undefined for parameter {}", inParameterNumber);
 			}
 		}
 		return "";
+	}
+
+	private void callAislesFileFunction(AislesFileCsvBean inCsvBean) {
+		// to this point, all functions have the location name as first parameter. Might declone.
+		String functionName = getFunctionName(inCsvBean);
+		if ("SetIndicators".equalsIgnoreCase(functionName)) {
+			String locationName = getFunctionStringParameter(1, inCsvBean);
+			Location loc = mFacility.findSubLocationById(locationName);
+			if (loc == null) {
+				LOGGER.warn("unknown location name {} for {}", locationName, functionName);
+				return;
+			}
+			int lowLed = getFunctionIntParameter(2, inCsvBean);
+			int highLed = getFunctionIntParameter(3, inCsvBean);
+			loc.setIndicatorLedValuesInteger(lowLed, highLed);
+		} else if ("logSlotTierLEDs".equalsIgnoreCase(functionName)) {
+			String locationName = getFunctionStringParameter(1, inCsvBean);
+			Location loc = mFacility.findSubLocationById(locationName);
+			if (loc == null) {
+				LOGGER.warn("unknown location name {} for {}", locationName, functionName);
+				return;
+			}
+			if (loc instanceof Tier) {
+				Tier tier = (Tier) loc;
+				tier.logSlotTierLedParameters();
+			} else {
+				LOGGER.warn("{} not a tier for {}", locationName, functionName);
+			}
+		} else if ("setSlotTierLEDs".equalsIgnoreCase(functionName)) {
+			String locationName = getFunctionStringParameter(1, inCsvBean);
+			Location loc = mFacility.findSubLocationById(locationName);
+			if (loc == null) {
+				LOGGER.warn("unknown location name {} for {}", locationName, functionName);
+				return;
+			}
+			if (loc instanceof Tier) {
+				Tier tier = (Tier) loc;
+				int tierStartLed = getFunctionIntParameter(2, inCsvBean);
+				int tierLedCount = getFunctionIntParameter(3, inCsvBean);
+				boolean increaseFromAnchor = "Y".equalsIgnoreCase(getFunctionStringParameter(4, inCsvBean));
+				int ledsPerSlot = getFunctionIntParameter(5, inCsvBean);
+				String slotLedStarts = getFunctionStringParameter(6, inCsvBean);
+			
+				tier.setSlotTierLeds(tierStartLed, tierLedCount,increaseFromAnchor, ledsPerSlot, slotLedStarts);
+			} else {
+				LOGGER.warn("{} not a tier for {}", locationName, functionName);
+			}
+		} else {
+			LOGGER.error("unimplemented function name {}", functionName);
+		}
+
 	}
 
 }

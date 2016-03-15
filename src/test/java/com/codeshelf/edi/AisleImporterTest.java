@@ -32,8 +32,6 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.Vertex;
 import com.codeshelf.testframework.MockDaoTest;
 
-import edu.emory.mathcs.backport.java.util.Collections;
-
 /**
  * @author ranstrom
  * Also see createAisleTest() in FacilityTest.java
@@ -3187,6 +3185,16 @@ public class AisleImporterTest extends MockDaoTest {
 		importAislesData(facility, csvString);
 		commitTransaction();
 
+		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Function,logSlotTierLeds,A78.B1.T7\r\n"//
+				+ "Function,logSlotTierLeds,A77.B1.T7\r\n"// this will warn since location is unknown
+				+ "Function,logSlotTierLeds,A78.B1\r\n"// this will warn since it is not a tier
+				+ "Function,logSlotTierLeds,A78.B1.T2\r\n";//
+		beginTransaction();
+		facility = facility.reload();
+		importAislesData(facility, csvString2);
+		commitTransaction();
+
 		LOGGER.info("1: Check the end slots LEDs without any funny business.");
 		beginTransaction();
 		facility = facility.reload();
@@ -3218,10 +3226,10 @@ public class AisleImporterTest extends MockDaoTest {
 		logTierLeds(tier6);
 		logTierLeds(tier5);
 		// tier8 starts are 45,54,64,72,80. so lets set the same for T7
-		logSlotLedParameters(tier8);
-		// see 43,42,false,4,"45/54/64/72/80" in the consol
-		tier7.setSlotTierLEDs(43, 42, false, 4, "45/54/64/72/80");
-		logSlotLedParameters(tier7);
+		tier8.logSlotTierLedParameters();
+		// see 43,42,false,4,"45/54/64/72/80" in the console
+		tier7.setSlotTierLeds(43, 42, false, 4, "45/54/64/72/80");
+		tier7.logSlotTierLedParameters();
 		logTierLeds(tier7);
 		// show that T8 and T7 are the same
 		assertLeds(facility, "A78.B1.T7.S1", 80, 83);
@@ -3247,7 +3255,7 @@ public class AisleImporterTest extends MockDaoTest {
 		beginTransaction();
 		facility = facility.reload();
 		// Does reload clear out what was set before?
-		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+		String csvString3 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A78,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,144,,,,\r\n" //
 				+ "Tier,T1,,5,42,10,,\r\n" //
@@ -3258,11 +3266,15 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T6,,5,42,130,,\r\n" //
 				+ "Tier,T7,,5,42,160,,\r\n" //
 				+ "Tier,T8,,5,42,180,,\r\n" //
-				+ "Tier,T9,,5,42,210,,\r\n";//
+				+ "Tier,T9,,5,42,210,,\r\n"//
+				+ "Aisle,A999,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "function,setSlotTierLEDs,A78.B1.T1,295,42,N,4,297/306/316/324/332\r\n"//
+				+ "function,logSlotTierLEDs,A78.B1.T1\r\n";//
 		// + "Function,SetIndicators,A78.B1,4,6,\r\n";//
 
-		importAislesData(facility, csvString2);
+		importAislesData(facility, csvString3);
 		assertLeds(facility, "A78.B1", 0, 0);
+		assertLeds(facility, "A78.B1.T1.S5", 297, 300);
 		commitTransaction();
 
 	}
@@ -3311,7 +3323,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		// The function call set this
 		assertLeds(facility, "A77.B1", 4, 6);
-		
+
 		// 
 		Bay bay77_1 = (Bay) facility.findSubLocationById("A77.B1");
 		Assert.assertNotNull(bay77_1);
@@ -3343,36 +3355,6 @@ public class AisleImporterTest extends MockDaoTest {
 			LOGGER.info("{}.{}: {}-{}", tierId, slot.getDomainId(), slot.getFirstLedNumAlongPath(), slot.getLastLedNumAlongPath());
 
 		}
-	}
-
-	/**
-	 * Main purpose is to produce the parameters for a call to setSlotTierLEDs(). See it in the console
-	 */
-	private void logSlotLedParameters(Tier inTier) {
-		int firstLed = inTier.getFirstLedNumAlongPath();
-		int totalLed = inTier.getLastLedNumAlongPath() - firstLed + 1;
-		boolean increaseFromAnchor = inTier.isLowerLedNearAnchor();
-		String slotStarts = "";
-		int ledsPerSlot = 0;
-		List<Slot> slots = inTier.getSlotsInDomainIdOrder();
-		if (!increaseFromAnchor) {
-			Collections.reverse(slots);
-		}
-		for (Slot slot : slots) {
-			slotStarts += "/" + slot.getFirstLedNumAlongPath();
-			ledsPerSlot = slot.getLastLedNumAlongPath() - slot.getFirstLedNumAlongPath() + 1;
-		}
-		// strip off the first 
-		slotStarts = slotStarts.substring(1);
-		slotStarts = "\"" + slotStarts + "\"";
-
-		LOGGER.info("{} setSlotTierLEDs parameters", inTier);
-		LOGGER.info("{},{},{},{},{}", firstLed, totalLed, increaseFromAnchor, ledsPerSlot, slotStarts);
-		/*setSlotTierLEDs(int inTierStartLed,
-			int inLedCountTier,
-			boolean inLowerLedNearAnchor,
-			int inLedsPerSlot,
-			String inSlotStartingLeds) */
 	}
 
 }
