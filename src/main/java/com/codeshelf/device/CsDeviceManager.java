@@ -950,6 +950,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		// updateNetwork is called a lot. It does figure out if something needs to change..
 
 		for (Che che : network.getChes().values()) {
+			LOGGER.info("Processing CHE " + che.getDeviceGuidStrNoPrefix());
 			try {
 				UUID id = che.getPersistentId();
 				NetGuid deviceGuid = new NetGuid(che.getDeviceGuid());
