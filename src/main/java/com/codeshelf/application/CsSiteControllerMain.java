@@ -25,6 +25,7 @@ import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.OpenTsdb;
 import com.codeshelf.metrics.OpenTsdbReporter;
+import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.client.CsClientEndpoint;
 import com.codeshelf.ws.client.MessageCoordinator;
 import com.codeshelf.ws.client.WebSocketEventListener;
@@ -60,6 +61,8 @@ public final class CsSiteControllerMain {
 	/**
 	 */
 	public static void main(String[] inArgs) throws Exception {
+		//In case of restart, give CHEs time to become un-associated
+		ThreadUtils.sleep(2000);
 		String usernameStandby = System.getProperty("websocket.username_standby");
 		String portStandby = System.getProperty("sitecontroller.port_standby");
 		if (inArgs.length > 0 && "standby".equalsIgnoreCase(inArgs[0]) && usernameStandby != null && portStandby != null){
