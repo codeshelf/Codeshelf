@@ -97,6 +97,17 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 	@Type(type="com.codeshelf.persistence.DialectUUIDType")
 	@Getter @Setter(AccessLevel.PRIVATE)
 	private UUID							orderDetailId;
+	
+	@Column(nullable = true, name = "order_persistentid")
+	@Type(type="com.codeshelf.persistence.DialectUUIDType")
+	@Getter @Setter(AccessLevel.PRIVATE)
+	private UUID							orderId;
+
+	@Column(nullable = true, name = "order_group_persistentid")
+	@Type(type="com.codeshelf.persistence.DialectUUIDType")
+	@Getter @Setter(AccessLevel.PRIVATE)
+	private UUID							orderGroupId;
+
 
 	@Column(nullable = true, name = "work_instruction_persistentid")
 	@Type(type="com.codeshelf.persistence.DialectUUIDType")
@@ -214,6 +225,9 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 		OrderDetail orderDetail = wi.getOrderDetail();
 		if (orderDetail != null) {
 			setOrderDetailId(orderDetail.getPersistentId());
+			OrderHeader order = orderDetail.getParent();
+			setOrderId(order.getPersistentId());
+			setOrderGroupId(order.getOrderGroupPersistentId());
 		}
 		if (getCreated() == null) { //if explicitly set prior don't overwrite
 			setCreated(wi.getCompleted());
