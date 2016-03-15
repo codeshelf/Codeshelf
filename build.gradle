@@ -205,6 +205,10 @@ task siteControllerJar (type: Jar) {
 		)
 }
 
+task classpath {
+     print configurations.runtime.asPath
+}
+
 task copyRuntimeDeps(type: Copy) {
 	into 'build/dist/lib'
 	from configurations.runtime
