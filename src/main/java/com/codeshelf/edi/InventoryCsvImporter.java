@@ -37,9 +37,16 @@ import com.google.inject.Inject;
  */
 public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> implements ICsvInventoryImporter {
 
-	private static final Logger	LOGGER					= LoggerFactory.getLogger(InventoryCsvImporter.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(InventoryCsvImporter.class);
 
-	private static boolean		archiveUnreadInventory	= false;
+	public enum UnreadInventoryAction {
+		UNREAD_LEAVE,
+		UNREAD_ARCHIVE,
+		UNREAD_DELETE
+	}
+
+	private static UnreadInventoryAction	unreadAction	= UnreadInventoryAction.UNREAD_LEAVE;
+
 	// DEV-1522 Tricky stuff. If we archive or delete, we really should remove from the location's storedItems list also.
 
 	@Inject
@@ -139,8 +146,8 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				}
 			}
 			// JR says this looks dangerous. Any random file in import/inventory would result in inactivation of all inventory and most masters.
-			if (archiveUnreadInventory)
-				archiveCheckItemStatuses(inFacility, inProcessTime);
+			if (unreadAction != UnreadInventoryAction.UNREAD_LEAVE)
+				archiveCheckItemStatuses(inFacility, inProcessTime, unreadAction);
 
 			LOGGER.debug("End slotted inventory import.");
 		}
@@ -149,32 +156,36 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inFacility
-	 * @param inProcessTime
+	 * If inventory file does not have some items (and their masters) that are currently in the system, take the action. 
 	 */
-	private void archiveCheckItemStatuses(final Facility inFacility, final Timestamp inProcessTime) {
+	private void archiveCheckItemStatuses(final Facility inFacility,
+		final Timestamp inProcessTime,
+		UnreadInventoryAction inUnreadAction) {
 		LOGGER.info("Archive unreferenced item data");
-		// JR says this all looks dangerous. Not calling for now.
+	
+		if (inUnreadAction == UnreadInventoryAction.UNREAD_ARCHIVE) {
+			// Inactivate all items that don't match the import timestamp.
+			// This looks slow!
+			for (ItemMaster itemMaster : ItemMaster.staticGetDao().findByParent(inFacility)) {
+				Boolean itemMasterIsActive = false;
+				for (Item item : itemMaster.getItems()) {
+					if (item.getUpdated().equals(inProcessTime)) {
+						itemMasterIsActive = true;
+					} else {
+						LOGGER.info("Archive old item: " + itemMaster.getItemId());
+						item.setActive(false);
+						Item.staticGetDao().store(item);
+					}
+				}
 
-		// Inactivate all items that don't match the import timestamp.
-		// This looks slow!
-		for (ItemMaster itemMaster : ItemMaster.staticGetDao().findByParent(inFacility)) {
-			Boolean itemMasterIsActive = false;
-			for (Item item : itemMaster.getItems()) {
-				if (item.getUpdated().equals(inProcessTime)) {
-					itemMasterIsActive = true;
-				} else {
-					LOGGER.info("Archive old item: " + itemMaster.getItemId());
-					item.setActive(false);
-					Item.staticGetDao().store(item);
+				if (!itemMasterIsActive) {
+					LOGGER.info("Archive old item master: " + itemMaster.getItemId());
+					itemMaster.setActive(false);
+					ItemMaster.staticGetDao().store(itemMaster);
 				}
 			}
-
-			if (!itemMasterIsActive) {
-				LOGGER.info("Archive old item master: " + itemMaster.getItemId());
-				itemMaster.setActive(false);
-				ItemMaster.staticGetDao().store(itemMaster);
-			}
+		} else if (inUnreadAction == UnreadInventoryAction.UNREAD_DELETE) {
+			LOGGER.error("UNREAD_DELETE not implemented");
 		}
 
 	}
