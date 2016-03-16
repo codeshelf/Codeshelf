@@ -5,6 +5,7 @@ import java.text.MessageFormat;
 
 public enum ErrorCode {
 	GENERAL("error.general", ""), //expects message from caller
+	FIELD_CUSTOM_MESSAGE("error.field", "{0}: {1}"), //expects message from caller
 	FIELD_REQUIRED("error.field.required", "{0} is required"),
 	FIELD_NUMBER_NOT_NEGATIVE("error.field.number.notnegative", "{0} with value {1} cannot be negative"),
 	FIELD_NUMBER_REQUIRED("error.field.number.required", "{0} with value {1} could not be converted to a number"),

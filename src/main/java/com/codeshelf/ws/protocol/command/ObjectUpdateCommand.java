@@ -13,6 +13,9 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.validation.DefaultErrors;
+import com.codeshelf.validation.ErrorCode;
+import com.codeshelf.validation.InputValidationException;
 import com.codeshelf.ws.protocol.request.ObjectUpdateRequest;
 import com.codeshelf.ws.protocol.response.ObjectUpdateResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
@@ -34,6 +37,7 @@ public class ObjectUpdateCommand extends CommandABC<ObjectUpdateRequest> {
 	@Override
 	public ResponseABC exec() {
 		ObjectUpdateResponse response = new ObjectUpdateResponse();
+		DefaultErrors errors = new DefaultErrors(this.getClass());
 
 		// extract UUID
 		String className = request.getClassName();
@@ -41,7 +45,10 @@ public class ObjectUpdateCommand extends CommandABC<ObjectUpdateRequest> {
 		if (persistentId==null) {
 			LOGGER.error("Failed to update "+className+":  Object ID is undefined");
 			response.setStatus(ResponseStatus.Fail);
-			response.setStatusMessage("persistentId was null");
+			String msg = "persistentId was null";
+			response.setStatusMessage(msg);
+			errors.reject(ErrorCode.FIELD_GENERAL, msg);
+			response.setErrors(errors);
 			return response;
 		}
 		UUID objectId = null;
@@ -51,7 +58,10 @@ public class ObjectUpdateCommand extends CommandABC<ObjectUpdateRequest> {
 		catch (Exception e) {
 			LOGGER.error("Failed to update "+className,e);
 			response.setStatus(ResponseStatus.Fail);
-			response.setStatusMessage("Failed to convert object ID "+persistentId+" to UUID");
+			String msg = "Failed to convert object ID "+persistentId+" to UUID";
+			response.setStatusMessage(msg);
+			errors.reject(ErrorCode.FIELD_GENERAL, msg);
+			response.setErrors(errors);
 			return response;
 		}
 
@@ -114,13 +124,22 @@ public class ObjectUpdateCommand extends CommandABC<ObjectUpdateRequest> {
 					}
 					else {
 						response.setStatus(ResponseStatus.Fail);
-						response.setStatusMessage("Some properties failed to update: " + failures.toString());
+						response.setStatusMessage("Some properties failed to update: " + failures.toString());						
+						for (Throwable t : failures.values()) {
+							if (t instanceof InputValidationException) {
+								errors.addAllErrors(((InputValidationException)t).getErrors());
+							}
+						}
+						response.setErrors(errors);
 						return response;
 					}
 				}
 				else {
 					response.setStatus(ResponseStatus.Fail);
-					response.setStatusMessage(className+" with ID #"+objectId+" not found");
+					String msg = className+" with ID #"+objectId+" not found";
+					response.setStatusMessage(msg);
+					errors.reject(ErrorCode.FIELD_GENERAL, msg);
+					response.setErrors(errors);
 					return response;
 				}
 			}
@@ -129,7 +148,10 @@ public class ObjectUpdateCommand extends CommandABC<ObjectUpdateRequest> {
 			LOGGER.error("Failed to update object "+className+"("+objectId+")",e);
 		}
 		response.setStatus(ResponseStatus.Fail);
-		response.setStatusMessage("Update failed");
+		String msg = "Update failed";
+		response.setStatusMessage(msg);
+		errors.reject(ErrorCode.FIELD_GENERAL, msg);
+		response.setErrors(errors);
 		return response;
 	}
 

@@ -1,7 +1,6 @@
 package com.codeshelf.behavior;
 
 import java.sql.Timestamp;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -46,8 +45,6 @@ import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.codeshelf.ws.protocol.message.PosConSetupMessage;
 import com.codeshelf.ws.protocol.message.PropertyChangeMessage;
-import com.codeshelf.ws.protocol.message.SiteControllerOperationMessage;
-import com.codeshelf.ws.protocol.message.SiteControllerOperationMessage.SiteControllerTask;
 import com.codeshelf.ws.protocol.message.PosConLightAddressesMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.Strings;
@@ -402,13 +399,7 @@ public class UiUpdateBehavior implements IApiBehavior {
 				network.stealSiteController(controller);
 
 				//Restart the modified site controller.
-				SiteControllerOperationMessage shutdownMessage = new SiteControllerOperationMessage(SiteControllerTask.SHUTDOWN);
-				Set<User> users = new HashSet<>();
-				User user = controller.getUser();
-				if (user != null) {
-					users.add(user);
-				}
-				WebSocketManagerService.getInstance().sendMessage(users, shutdownMessage);			
+				controller.shutdown();
 			}
 			//Modify location. But, if location was the only thing that changed, no need to restart site controller
 			controller.setLocation(location);
@@ -480,8 +471,7 @@ public class UiUpdateBehavior implements IApiBehavior {
 			SiteController.staticGetDao().store(c);
 		}
 		
-		SiteControllerOperationMessage shutdownMessage = new SiteControllerOperationMessage(SiteControllerTask.SHUTDOWN);
-		WebSocketManagerService.getInstance().sendMessage(network.getSiteControllerUsers(), shutdownMessage);
+		network.shutdownSiteControllers();
 	}
 
 	public void restartSiteController(String uuid){
@@ -489,13 +479,6 @@ public class UiUpdateBehavior implements IApiBehavior {
 		if (controller == null) {
 			FormUtility.throwUiValidationException("Site Controller", "Server Error: Site Controller " + uuid + " not found", ErrorCode.GENERAL);
 		}
-
-		Set<User> users = new HashSet<>();
-		User user = controller.getUser();
-		if (user != null) {
-			users.add(user);
-		}
-		SiteControllerOperationMessage shutdownMessage = new SiteControllerOperationMessage(SiteControllerTask.SHUTDOWN);
-		WebSocketManagerService.getInstance().sendMessage(users, shutdownMessage);
+		controller.shutdown();
 	} 
 }

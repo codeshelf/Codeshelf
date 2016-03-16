@@ -127,6 +127,10 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	@Getter
 	private String										username;
 	private String										password;
+	
+	@Getter
+	@Setter
+	private Short										channel;
 
 	/* Device Manager owns websocket configuration too */
 	//	@Getter
@@ -236,6 +240,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			// start radio controller
 			NetworkId networkId = new NetworkId(network.getNetworkNum().byteValue());
 			radioController.setNetworkId(networkId);
+			setChannel(network.getChannel());
 			radioController.startController(network.getChannel().byteValue());
 			radioController.addControllerEventListener(this);
 		} else {
@@ -942,6 +947,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	}
 
 	public void updateNetwork(CodeshelfNetwork network) {
+		
 		if (getSiteControllerRole() != SiteControllerRole.NETWORK_PRIMARY){
 			this.lastNetworkUpdate = System.currentTimeMillis();
 			LOGGER.warn("Site Controller " + getUsername() + " is " + getSiteControllerRole() + ". Skipping updateNetwork() call");

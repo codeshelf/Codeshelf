@@ -16,7 +16,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,13 +58,16 @@ import com.codeshelf.model.domain.SiteController.SiteControllerRole;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.util.FormUtility;
 import com.codeshelf.util.UomNormalizer;
+import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.ws.protocol.message.SiteControllerOperationMessage;
 import com.codeshelf.ws.protocol.message.SiteControllerOperationMessage.SiteControllerTask;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
 
 import lombok.Getter;
 
@@ -450,46 +452,46 @@ public class Facility extends Location {
 	@JsonProperty("primaryChannel")
 	public void setPrimaryChannel(Short channel) {
 		CodeshelfNetwork network = getPrimaryNetwork();
-		network.setChannel(channel);
-		network.getDao().store(network);
+		if (!network.getChannel().equals(channel)){
+			network.setChannel(channel);
+			network.getDao().store(network);
+			network.shutdownSiteControllers();
+		}
 	}
 
 	@JsonProperty("primarySiteControllerId")
 	public String getPrimarySiteControllerId() {
 		CodeshelfNetwork network = getPrimaryNetwork();
 		Collection<SiteController> siteControllers = network.getSiteControllers().values();
-		if (siteControllers.size() > 1) {
-			LOGGER.warn("Multiple site controllers found but expected no more than one for facility: {}", this);
+		SiteController anySiteController = null;
+		for (SiteController siteController : siteControllers) {
+			anySiteController = siteController;
+			if (siteController.getRole() == SiteControllerRole.NETWORK_PRIMARY) {
+				return siteController.getDomainId();
+			}
 		}
-		LinkedList<SiteController> list = new LinkedList<>(siteControllers);
-		if (list.isEmpty()) {
-			return null;
-		} else {
-			return list.getFirst().getDomainId();
-		}
+		return anySiteController == null ? null : anySiteController.getDomainId();
 	}
 
 	@JsonProperty("primarySiteControllerId")
-	public void setPrimarySiteControllerId(String siteControllerId) {
-		if (!Strings.isNullOrEmpty(siteControllerId)) {
+	public void setPrimarySiteControllerId(String newPrimarySiteControllerId) {
+		String oldPrimarySiteCintrollerId = getPrimarySiteControllerId();
+		if (!Strings.isNullOrEmpty(newPrimarySiteControllerId) && !newPrimarySiteControllerId.equalsIgnoreCase(oldPrimarySiteCintrollerId)) {
 			CodeshelfNetwork network = getPrimaryNetwork();
 			Collection<SiteController> siteControllers = network.getSiteControllers().values();
 			if (siteControllers.size() > 1) {
-				LOGGER.warn("Multiple site controllers found but expected no more than one for facility: {}", this);
+				String msg = "More than one Site Controller exist in " + network.getDomainId() + " network. Use Site Cntrollers list.";
+				LOGGER.warn(msg);
+				FormUtility.throwUiValidationException("Primary Site Controller ID", msg, ErrorCode.FIELD_CUSTOM_MESSAGE);
 			}
-
-			SiteController foundSiteController = null;
-			for (SiteController siteController : siteControllers) {
-				if (siteController.getDomainId().equals(String.valueOf(siteControllerId))) {
-					foundSiteController = siteController;
-				} else {
-					network.removeSiteController(siteController.getDomainId());
-					SiteController.staticGetDao().delete(siteController);
-				}
+			
+			if (siteControllers.size() == 1){
+				SiteController siteController = Iterables.get(siteControllers, 0);
+				siteController.shutdown();
+				network.removeSiteController(siteController.getDomainId());
+				SiteController.staticGetDao().delete(siteController);
 			}
-			if (foundSiteController == null) {
-				network.createSiteController(Integer.parseInt(siteControllerId), "Default Area", false, SiteControllerRole.NETWORK_PRIMARY);
-			}
+			network.createSiteController(Integer.parseInt(newPrimarySiteControllerId), "Default Area", false, SiteControllerRole.NETWORK_PRIMARY);
 		}
 	}
 

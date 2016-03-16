@@ -1,5 +1,8 @@
 package com.codeshelf.model.domain;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -21,6 +24,9 @@ import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.ws.protocol.message.SiteControllerOperationMessage;
+import com.codeshelf.ws.protocol.message.SiteControllerOperationMessage.SiteControllerTask;
+import com.codeshelf.ws.server.WebSocketManagerService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -114,5 +120,15 @@ public class SiteController extends WirelessDeviceABC {
 
 	public boolean getUserExists(){
 		return getUser() != null;
+	}
+	
+	public void shutdown(){
+		Set<User> users = new HashSet<>();
+		User user = getUser();
+		if (user != null) {
+			users.add(user);
+		}
+		SiteControllerOperationMessage shutdownMessage = new SiteControllerOperationMessage(SiteControllerTask.SHUTDOWN);
+		WebSocketManagerService.getInstance().sendMessage(users, shutdownMessage);
 	}
 }

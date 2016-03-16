@@ -42,7 +42,6 @@ import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
-import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.persistence.TenantPersistenceService;

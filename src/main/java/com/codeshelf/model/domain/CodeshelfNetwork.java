@@ -35,6 +35,9 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.SiteController.SiteControllerRole;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.ws.protocol.message.SiteControllerOperationMessage;
+import com.codeshelf.ws.protocol.message.SiteControllerOperationMessage.SiteControllerTask;
+import com.codeshelf.ws.server.WebSocketManagerService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -342,5 +345,10 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 			}
 		}
 		return users;
+	}
+	
+	public void shutdownSiteControllers(){
+		SiteControllerOperationMessage shutdownMessage = new SiteControllerOperationMessage(SiteControllerTask.SHUTDOWN);
+		WebSocketManagerService.getInstance().sendMessage(getSiteControllerUsers(), shutdownMessage);
 	}
 }
