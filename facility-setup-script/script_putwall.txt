@@ -1,0 +1,84 @@
+// This script sets up facility, and demonstrates various CHE workflows
+
+var :site		5000
+var :channel	11
+var :che1 		0x0000009B
+var :che2 		0x000000ED
+var :chePall	0x0000009D
+var :chePos		0x000000DB
+var :contr1 	0x00000064
+var :contr2 	0x000001D8
+var :sftphost	sftp.codeshelf.com
+var :sftpuser	test
+var :sftppass	**********
+
+/* This is a multi
+line comment
+/* This line doesn't inrettupt it
+// This line doesn't close it */
+But this one does */
+
+STEP This step sets up facility
+SERVER
+editFacility PUTFACILITY :site :channel
+createDummyOutline 1
+setProperty scanpick Disabled
+setProperty invtmenu true
+setProperty pickmult true
+importAisles aisles
+importLocations locations
+setWall Aisle1 putwall
+setWall A2 skuwall
+setController LocX24   lights  :contr1 1 tiersInAisle
+setController LocX26   lights  :contr2 1 tiersInAisle
+setController A3.B1.T1 poscons 0x000000AA 1 tiersInAisle
+setPosconToBay A3.B3 0x000000AA 98 A3.B4 0x000000AA 99 A1.B2 :chePos 11 A2.B2 :chePos 1
+setPoscons A3.B1.T1 1 forward A3.B2.T1 5 forward A3.B3.T1 9 forward A3.B4.T1 13 forward
+createChe 0x000000A4 blue LINE_SCAN CHE_A4 CODECORPS3600 LABEL_V1
+createChe :che1 green SETUP_ORDERS CHE_A ORIGINALSERIAL POSCON_V1
+createChe :che2 cyan SETUP_ORDERS CHE_B
+createChe :chePall orange PALLETIZER CHE_C
+deleteAllPaths
+defPath p1 - 2.82 5.40 5.19 5.40 - 5.19 5.40 5.19 6.40 - 5.19 6.40 2.77 6.40
+defPath p2 - 2.60 7.40 5.28 7.40
+assignPathSgmToAisle p1 0 A1
+assignPathSgmToAisle p1 2 A2
+assignPathSgmToAisle p2 0 A3
+setPathName p1 Frozen Food
+setPathName p2
+assignTapeToTier 0007 A1.B2.T1 0027 A2.B1.T1 000X A2.B2.T1
+
+importInventory inventory
+importOrdersWithDeletion orders_10
+
+STEP putting orders on  wall
+SITE
+//waitForDevices :che1 :che2 :contr1 :contr2
+defChe cheA :che1
+defChe cheB :che2 cheC :chePall
+logout cheA cheB cheC
+loginSetup cheA Ilya1
+scan cheA X%ORDER_WALL PUT_WALL_SCAN_ORDER
+orderToWall cheA 26768709 %000000070050
+orderToWall cheA 26768711 %000000070350
+orderToWall cheA 26768712 %000000070650
+orderToWall cheA 26768718 %000000070900
+logout cheA cheB
+
+STEP put items in wall
+SITE
+defChe cheA :che1
+defChe cheB :che2 cheC :chePall
+
+login cheA Ilya SETUP_SUMMARY
+login cheB Paul SETUP_SUMMARY
+scan cheA X%PUT_WALL PUT_WALL_SCAN_WALL
+scan cheB X%PUT_WALL PUT_WALL_SCAN_WALL
+scan cheA L%A1.B2 PUT_WALL_SCAN_ITEM
+scan cheB L%A1.B2 PUT_WALL_SCAN_ITEM
+scan cheB 3605970829131 DO_PUT
+cheExec cheB pickItemAuto
+scan cheB 3605970651558 DO_PUT
+cheExec cheB pickItemAuto
+scan cheA 3605970829216 PUT_WALL_POSCON_BUSY
+logout cheA cheB
