@@ -186,6 +186,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			}
 		} else if (inUnreadAction == UnreadInventoryAction.UNREAD_DELETE) {
 			LOGGER.error("UNREAD_DELETE not implemented");
+			// May not want to support this. Let purge job get archived items. Doesn't as of v27, though.
 		}
 
 	}

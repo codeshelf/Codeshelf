@@ -42,7 +42,6 @@ import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
-import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -1014,10 +1013,10 @@ public class InventoryImporterTest extends ServerTest {
 		// item 1124 from B01 is gone.
 		// item 1125 in B02 is gone
 		String csvString2 = "itemId,locationId,description,quantity,uom,gtin\r\n" //
-				+ "1123,S1604B01,description 1123,1,EA,gtin1123\r\n" //
-				+ "1125,S1604B03,description 1125,11,EA,tin1125\r\n" //	1125 in two slots
+				+ "1123,S1604B01,description 1123,1,EA,gtin1123\r\n" // // count changed on ths
+				+ "1125,S1604B03,description 1125,11,EA,tin1125\r\n" //	1125 in BO3 did not change at all
 				+ "1126,S1604B04,description 1126,6,EA,tin1126\r\n" //
-				+ "1127,S1604B05,description 1127,5,EA,tin1127\r\n"; //
+				+ "1127,S1604B05,description 1127,5,EA,tin1127\r\n"; // 1127 in B05 did not change at all
 		setupInventoryData(facility, csvString2);
 		commitTransaction();
 
@@ -1041,15 +1040,20 @@ public class InventoryImporterTest extends ServerTest {
 		else
 			Assert.assertTrue(itemB.getActive());
 		// Is it still findable from the normal APIs?
-
 		Item item1124B01_x = locationB01.getStoredItemFromMasterIdAndUom("1124", "EA");
 		Assert.assertNotNull(item1124B01_x);
-		// should not have found this since it is inactive.
+		// getStoredItemFromMasterIdAndUom() does find it. Not sure it should.
+		// WorkBehavior calls
+		// Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(path, uomStr);
+		// which obviously will skip inactive items.
 
 		Item itemC = Item.staticGetDao().findByPersistentId(item1125B02persID);
 		Assert.assertNotNull(itemC);
+		
 		Item itemD = Item.staticGetDao().findByPersistentId(item1127B05persID);
 		Assert.assertNotNull(itemD);
+		Assert.assertTrue(itemD.getActive());
+	
 
 		commitTransaction();
 
