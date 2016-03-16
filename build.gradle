@@ -221,6 +221,11 @@ task copyNativeLibraries(type: Copy) {
 	from 'lib/native/'
 }
 
+task runServer(type: JavaExec) {
+    main = 'com.codeshelf.application.ServerMain'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
 task dist {
 	dependsOn serverJar, siteControllerJar, copyRuntimeDeps, copyNativeLibraries
 }
