@@ -37,7 +37,10 @@ import com.google.inject.Inject;
  */
 public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> implements ICsvInventoryImporter {
 
-	private static final Logger		LOGGER	= LoggerFactory.getLogger(InventoryCsvImporter.class);
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(InventoryCsvImporter.class);
+
+	private static boolean		archiveUnreadInventory	= false;
+	// DEV-1522 Tricky stuff. If we archive or delete, we really should remove from the location's storedItems list also.
 
 	@Inject
 	public InventoryCsvImporter(final EventProducer inProducer) {
@@ -136,7 +139,8 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				}
 			}
 			// JR says this looks dangerous. Any random file in import/inventory would result in inactivation of all inventory and most masters.
-			// archiveCheckItemStatuses(inFacility, inProcessTime);
+			if (archiveUnreadInventory)
+				archiveCheckItemStatuses(inFacility, inProcessTime);
 
 			LOGGER.debug("End slotted inventory import.");
 		}
@@ -147,12 +151,14 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	/**
 	 * @param inFacility
 	 * @param inProcessTime
+	 */
 	private void archiveCheckItemStatuses(final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.info("Archive unreferenced item data");
 		// JR says this all looks dangerous. Not calling for now.
 
-		// Inactivate the DDC item that don't match the import timestamp.
-		for (ItemMaster itemMaster : inFacility.getItemMasters()) {
+		// Inactivate all items that don't match the import timestamp.
+		// This looks slow!
+		for (ItemMaster itemMaster : ItemMaster.staticGetDao().findByParent(inFacility)) {
 			Boolean itemMasterIsActive = false;
 			for (Item item : itemMaster.getItems()) {
 				if (item.getUpdated().equals(inProcessTime)) {
@@ -160,7 +166,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				} else {
 					LOGGER.info("Archive old item: " + itemMaster.getItemId());
 					item.setActive(false);
-					mItemDao.store(item);
+					Item.staticGetDao().store(item);
 				}
 			}
 
@@ -172,8 +178,6 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		}
 
 	}
-	 */
-	
 
 	// --------------------------------------------------------------------------
 	/**
@@ -221,92 +225,95 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) throws InputValidationException {
 
-			LOGGER.info(inCsvBean.toString());
-			String errorMsg = inCsvBean.validateBean();
-			if (errorMsg != null) {
-				throw new InputValidationException(inCsvBean, errorMsg);
-			}
+		LOGGER.info(inCsvBean.toString());
+		String errorMsg = inCsvBean.validateBean();
+		if (errorMsg != null) {
+			throw new InputValidationException(inCsvBean, errorMsg);
+		}
 
-			UomMaster uomMaster = upsertUomMaster(inCsvBean.getUom(), inFacility);
-			
-			String theItemID = inCsvBean.getItemId();
-			ItemMaster itemMaster = updateItemMaster(theItemID, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster);
-			@SuppressWarnings("unused")
-			Gtin gtinMap = upsertGtin(inFacility, itemMaster, inCsvBean, uomMaster);
+		UomMaster uomMaster = upsertUomMaster(inCsvBean.getUom(), inFacility);
 
-			String theLocationID = inCsvBean.getLocationId();
-			Location location = inFacility.findSubLocationById(theLocationID);
-			// Remember, findSubLocationById will find inactive locations.
-			// We couldn't find the location, so assign the inventory to the facility itself (which is a location);  Not sure this is best, but it is the historical behavior from pre-v1.
-			if (location == null) {
-				produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
-				produceRecordViolationEvent(inCsvBean, "Using facility for missing location");
-				//produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_IMPLIED_VALUE, inFacility.getLocationId());			
-				location = inFacility;
-			}
-			// If location is inactive, then what? Would we want to move existing inventory there to facility? Doing that initially mostly because it is easier.
-			// Might be better to ask if this inventory item is already in that inactive location, and not move it if so.
-			else if (!location.isActive()) {
-				produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_REFERENCE_INACTIVE);
-				produceRecordViolationEvent(inCsvBean, "Using facility for inactive location");
-				//produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_IMPLIED_VALUE, inFacility.getLocationId());			
-				location = inFacility;
-			}
+		String theItemID = inCsvBean.getItemId();
+		ItemMaster itemMaster = updateItemMaster(theItemID, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster);
+		@SuppressWarnings("unused")
+		Gtin gtinMap = upsertGtin(inFacility, itemMaster, inCsvBean, uomMaster);
 
-			if (Strings.isNullOrEmpty(inCsvBean.getCmFromLeft())) {
-				inCsvBean.setCmFromLeft("0");
-			}
+		String theLocationID = inCsvBean.getLocationId();
+		Location location = inFacility.findSubLocationById(theLocationID);
+		// Remember, findSubLocationById will find inactive locations.
+		// We couldn't find the location, so assign the inventory to the facility itself (which is a location);  Not sure this is best, but it is the historical behavior from pre-v1.
+		if (location == null) {
+			produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
+			produceRecordViolationEvent(inCsvBean, "Using facility for missing location");
+			//produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_IMPLIED_VALUE, inFacility.getLocationId());			
+			location = inFacility;
+		}
+		// If location is inactive, then what? Would we want to move existing inventory there to facility? Doing that initially mostly because it is easier.
+		// Might be better to ask if this inventory item is already in that inactive location, and not move it if so.
+		else if (!location.isActive()) {
+			produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_REFERENCE_INACTIVE);
+			produceRecordViolationEvent(inCsvBean, "Using facility for inactive location");
+			//produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_IMPLIED_VALUE, inFacility.getLocationId());			
+			location = inFacility;
+		}
 
-			if (Strings.isNullOrEmpty(inCsvBean.getCmFromLeft())) {
-				inCsvBean.setCmFromLeft("0");
-			}
-			@SuppressWarnings("unused")
-			Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
-			
+		if (Strings.isNullOrEmpty(inCsvBean.getCmFromLeft())) {
+			inCsvBean.setCmFromLeft("0");
+		}
+
+		if (Strings.isNullOrEmpty(inCsvBean.getCmFromLeft())) {
+			inCsvBean.setCmFromLeft("0");
+		}
+		@SuppressWarnings("unused")
+		Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
+
 	}
 
 	/**
 	 * Will not update a GtinMap. 
 	 * 
 	 */
-	private Gtin upsertGtin(final Facility inFacility, final ItemMaster inItemMaster, 
-		final InventorySlottedCsvBean inCsvBean, UomMaster uomMaster) {
-		
+	private Gtin upsertGtin(final Facility inFacility,
+		final ItemMaster inItemMaster,
+		final InventorySlottedCsvBean inCsvBean,
+		UomMaster uomMaster) {
+
 		if (inCsvBean.getGtin() == null || inCsvBean.getGtin().isEmpty()) {
 			return null;
 		}
-		
+
 		Gtin result = null;
 		ItemMaster previousItemMaster = null;
-		
+
 		// Get existing GtinMap
 		result = Gtin.staticGetDao().findByDomainId(null, inCsvBean.getGtin());
-		
+
 		if (result != null) {
 			previousItemMaster = result.getParent();
-			
+
 			// Check if existing GTIN is associated with the ItemMaster
 			if (previousItemMaster.equals(inItemMaster)) {
-				
+
 				// Check if the UOM specified in the inventory file matches UOM of existing GTIN
 				if (!uomMaster.equals(result.getUomMaster())) {
-					LOGGER.warn("UOM specified in order line {} conflicts with UOM of specified existing GTIN {}." +
-							" Did not change UOM for existing GTIN.", inCsvBean.toString(), result.getDomainId());
-					
+					LOGGER.warn("UOM specified in order line {} conflicts with UOM of specified existing GTIN {}."
+							+ " Did not change UOM for existing GTIN.", inCsvBean.toString(), result.getDomainId());
+
 					return null;
 				}
-				
+
 			} else {
-				
+
 				// Import line is attempting to associate existing GTIN with a new item. We do not allow this.
-				LOGGER.warn("GTIN {} already exists and is associated with item {}." + 
-						" GTIN will remain associated with item {}.", result.getDomainId(), result.getParent().getDomainId(),
-						result.getParent().getDomainId());
-				
+				LOGGER.warn("GTIN {} already exists and is associated with item {}." + " GTIN will remain associated with item {}.",
+					result.getDomainId(),
+					result.getParent().getDomainId(),
+					result.getParent().getDomainId());
+
 				return null;
 			}
 		} else {
-			
+
 			result = inItemMaster.createGtin(inCsvBean.getGtin(), uomMaster);
 
 			try {
@@ -315,7 +322,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				LOGGER.error("upsertGtinMap save", e);
 			}
 		}
-		
+
 		return result;
 	}
 
@@ -469,7 +476,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		}
 
 		Item result = inItemMaster.findOrCreateItem(inLocation, inUomMaster);
-		
+
 		// Refine using the cm value if there is one
 		String cmFromLeftString = inCsvBean.getCmFromLeft();
 		if (!Strings.isNullOrEmpty(cmFromLeftString)) {
@@ -477,14 +484,12 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				if (inLocation.isFacility()) {
 					errors.rejectValue("storedLocation", inLocation, ErrorCode.FIELD_WRONG_TYPE);
 				}
-			}
-			else {
+			} else {
 				errors.rejectValue("storedLocation", null, ErrorCode.FIELD_REQUIRED); //when cmFromLeft
 			}
 			try {
 				result.setCmFromLeftui(cmFromLeftString);
-			}
-			catch (InputValidationException e) {
+			} catch (InputValidationException e) {
 				errors.addAllErrors(e.getErrors());
 			}
 		}

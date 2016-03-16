@@ -1035,6 +1035,17 @@ public class InventoryImporterTest extends ServerTest {
 		Assert.assertNotNull(itemB);
 		LOGGER.info("1124 from B01 has location {}", itemB.getItemLocationName());
 
+		boolean expectArchive = false; // set to match InventoryCsvImporter.archiveUnreadInventory
+		if (expectArchive)
+			Assert.assertFalse(itemB.getActive());
+		else
+			Assert.assertTrue(itemB.getActive());
+		// Is it still findable from the normal APIs?
+
+		Item item1124B01_x = locationB01.getStoredItemFromMasterIdAndUom("1124", "EA");
+		Assert.assertNotNull(item1124B01_x);
+		// should not have found this since it is inactive.
+
 		Item itemC = Item.staticGetDao().findByPersistentId(item1125B02persID);
 		Assert.assertNotNull(itemC);
 		Item itemD = Item.staticGetDao().findByPersistentId(item1127B05persID);
@@ -1043,5 +1054,4 @@ public class InventoryImporterTest extends ServerTest {
 		commitTransaction();
 
 	}
-
 }
