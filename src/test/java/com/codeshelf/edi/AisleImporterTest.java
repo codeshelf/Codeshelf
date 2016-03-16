@@ -5,6 +5,7 @@
 package com.codeshelf.edi;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.UUID;
@@ -1112,7 +1113,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(tierB2T1);
 
 		// Get our network so that we may add a network controller
-		List<CodeshelfNetwork> networks = facility.getNetworks();
+		Collection<CodeshelfNetwork> networks = facility.getNetworks().values();
 		int howManyNetworks = networks.size();
 		Assert.assertTrue(howManyNetworks == 1);
 

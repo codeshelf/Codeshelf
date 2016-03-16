@@ -12,7 +12,7 @@ public class FacilityGenerator {
 	
 	public Facility generateValid() {
 		Facility facility = Facility.createFacility("F1", "", Point.getZeroPoint());
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		network.createChe("CHE1", new NetGuid("0xdeadbeef"), ColorEnum.MAGENTA);
 		return facility;
 	}

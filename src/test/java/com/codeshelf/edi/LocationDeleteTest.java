@@ -71,7 +71,7 @@ public class LocationDeleteTest extends ServerTest {
 
 		readLocationAliases(facility);
 
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 
 		Che che1 = network.getChe("CHE1");
 		che1.setColor(ColorEnum.GREEN);
@@ -249,7 +249,7 @@ public class LocationDeleteTest extends ServerTest {
 
 		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
-		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		CodeshelfNetwork theNetwork = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		Assert.assertNotNull(theNetwork);
 		Che theChe = theNetwork.getChe("CHE1");
 		Assert.assertNotNull(theChe);

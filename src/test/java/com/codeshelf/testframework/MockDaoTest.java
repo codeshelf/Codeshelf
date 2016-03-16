@@ -156,7 +156,7 @@ public abstract class MockDaoTest extends MinimalTest {
 	protected Facility createFacilityWithOutboundOrders() {
 
 		Facility resultFacility = getFacility();
-		CodeshelfNetwork network = resultFacility.getNetworks().get(0);
+		CodeshelfNetwork network = resultFacility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		
 		Che che = network.createChe("WITEST", new NetGuid("0x00000001"));
 

@@ -66,7 +66,7 @@ public class InventoryServiceTest extends ServerTest {
 		Facility facility = setupInventoryData(facilityForVirtualSlotting, csvString);
 		Assert.assertNotNull(facility);
 		
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		Che che1 = network.getChe("CHE1");
 		Assert.assertNotNull(che1);
 		che1.setColor(ColorEnum.GREEN);

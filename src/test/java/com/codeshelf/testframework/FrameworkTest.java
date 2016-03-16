@@ -665,7 +665,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 			Facility.staticGetDao().store(facility);
 		}
 
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		this.networkPersistentId = network.getPersistentId();
 
 		Che che1 = network.createChe(cheId1, cheGuid1, ColorEnum.MAGENTA);

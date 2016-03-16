@@ -119,7 +119,7 @@ public class VirtualSlottedFacilityGenerator {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		locationAliasImporter.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 
 		network.createChe("CHE1", new NetGuid("0xdeadbeef"), ColorEnum.MAGENTA);
 

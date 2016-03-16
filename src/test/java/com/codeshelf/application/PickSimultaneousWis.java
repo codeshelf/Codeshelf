@@ -48,7 +48,7 @@ public class PickSimultaneousWis extends ServerTest {
 
 		String fName = "F-" + inOrganizationName;
 		Facility facility = Facility.createFacility( fName, "TEST", Point.getZeroPoint());
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		network.createChe(cheId1, cheGuid1);
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -198,7 +198,7 @@ public class PickSimultaneousWis extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		// Let's find our CHE
-		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		CodeshelfNetwork theNetwork = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		Assert.assertNotNull(theNetwork);
 		Che theChe = theNetwork.getChe(cheId1);
 		Assert.assertNotNull(theChe);

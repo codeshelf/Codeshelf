@@ -1,7 +1,6 @@
 package com.codeshelf.integration;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -73,9 +72,9 @@ public class PosConControllerTest extends ServerTest{
 	
 	private LedController getController(UUID facilityId, String controllerId) {
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
-		List<CodeshelfNetwork> networks = facility.getNetworks();
-		Assert.assertFalse(networks.isEmpty());
-		Map<String, LedController> ledControllers = networks.get(0).getLedControllers();
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		Assert.assertNotNull(network);
+		Map<String, LedController> ledControllers = network.getLedControllers();
 		Assert.assertFalse(ledControllers.isEmpty());
 		LedController controller = ledControllers.get(controllerId);
 		return controller;

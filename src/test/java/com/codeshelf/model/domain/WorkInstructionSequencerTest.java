@@ -51,7 +51,7 @@ public class WorkInstructionSequencerTest extends ServerTest {
 				+ "Tier,T3,,0,80,0,,\r\n"; //
 		String fName = "F-" + inOrganizationName;
 		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		network.createChe("CHE1", new NetGuid("0xdeadbeef"), ColorEnum.MAGENTA);
 		importAislesData(facility, csvString);
 		
@@ -177,11 +177,9 @@ public class WorkInstructionSequencerTest extends ServerTest {
 	
 	private Che firstChe(Facility facility) {
 		Che firstChe = null;
-		for (CodeshelfNetwork network : facility.getNetworks()) {
-			for (Che che : network.getChes().values()) {
-				firstChe = che;
-				break;
-			}
+		for (Che che : facility.getChes()) {
+			firstChe = che;
+			break;
 		}
 		return firstChe;
 	}

@@ -134,7 +134,7 @@ public class UiUpdateBehavior implements IApiBehavior {
 		final String cheLighting) {
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityPersistentId);
 		Che che = new Che();
-		che.setParent(facility.getNetworks().get(0));
+		che.setParent(facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME));
 		return updateCheHelper(che, domainId, description, colorStr, controllerId, processModeStr, scannerTypeStr, cheLighting);
 	}
 
@@ -333,7 +333,7 @@ public class UiUpdateBehavior implements IApiBehavior {
 		final Facility facility,
 		final String inNewControllerId,
 		final String inNewDeviceType) {
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		NetGuid guid = new NetGuid(inNewControllerId);
 		String domainId = guid.getHexStringNoPrefix();
 		

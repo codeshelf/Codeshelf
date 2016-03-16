@@ -412,7 +412,7 @@ public class LightServiceTest extends ServerTest {
 				+ "A2.B2.T1.S1, D-40\r\n"; //
 		importLocationAliasesData(facility, csvLocationAlias);
 
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		Che che1 = network.getChe("CHE1");
 		che1.setColor(ColorEnum.GREEN);
 		Che che2 = network.getChe("CHE2");

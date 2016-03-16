@@ -57,7 +57,7 @@ public class FacilityTest extends ServerTest { // TODO: mock property service so
 		
 		Set<SiteController> siteControllers = new HashSet<SiteController>();
 
-		for (CodeshelfNetwork network : facility.getNetworks()) {
+		for (CodeshelfNetwork network : facility.getNetworks().values()) {
 			siteControllers.addAll(network.getSiteControllers().values());
 		}
 		Assert.assertEquals(1, siteControllers.size());

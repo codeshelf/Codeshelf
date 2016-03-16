@@ -40,7 +40,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = getFacility();
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		LedController controller1 = getDefaultController(network, "0xABCDEF");
 		Aisle aisle = getDefaultAisle(getFacility(), "A1");
 

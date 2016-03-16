@@ -106,7 +106,7 @@ public class InventoryPickRunTest extends ServerTest {
 				+ "A2.B2.T3, D-74\r\n"; //
 		importLocationAliasesData(facility, csvString2);
 		
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 
 		Che che1 = network.getChe("CHE1");
 		che1.setColor(ColorEnum.GREEN);
@@ -382,7 +382,7 @@ public class InventoryPickRunTest extends ServerTest {
 		// Now ready to run the cart
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
-		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		CodeshelfNetwork theNetwork = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		Che theChe = theNetwork.getChe("CHE1");
 
 LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
@@ -438,7 +438,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		//
 
 		// Now ready to run the cart
-		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		CodeshelfNetwork theNetwork = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		Che theChe = theNetwork.getChe("CHE1");
 
 		PropertyBehavior.turnOffHK(facility);

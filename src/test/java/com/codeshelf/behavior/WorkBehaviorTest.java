@@ -32,7 +32,6 @@ import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
@@ -360,11 +359,9 @@ public class WorkBehaviorTest extends ServerTest {
 
 	private Che firstChe(Facility facility) {
 		Che firstChe = null;
-		for (CodeshelfNetwork network : facility.getNetworks()) {
-			for (Che che : network.getChes().values()) {
-				firstChe = che;
-				break;
-			}
+		for (Che che : facility.getChes()) {
+			firstChe = che;
+			break;
 		}
 		return firstChe;
 	}

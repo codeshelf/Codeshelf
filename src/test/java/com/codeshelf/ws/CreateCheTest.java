@@ -89,7 +89,7 @@ public class CreateCheTest extends MockDaoTest {
 		Facility facility = Facility.createFacility("F1", "facilityf1", Point.getZeroPoint());
 		Facility.staticGetDao().store(facility);		
 		
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		
 		Che che = new Che();
 		che.setDescription(description1);
@@ -135,7 +135,7 @@ public class CreateCheTest extends MockDaoTest {
 
 		Facility.staticGetDao().store(facility);		
 		
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		
 		Che che = new Che();
 		che.setDescription(description1);
@@ -177,7 +177,7 @@ public class CreateCheTest extends MockDaoTest {
 		Facility facility = Facility.createFacility("F1", "facf1", Point.getZeroPoint());
 		Facility.staticGetDao().store(facility);		
 		
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		
 		Che che = new Che();
 		che.setDescription(description1);
@@ -241,7 +241,7 @@ public class CreateCheTest extends MockDaoTest {
 		Facility facility = Facility.createFacility("F1", "facf1", Point.getZeroPoint());
 		Facility.staticGetDao().store(facility);		
 		
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		
 		Che che = new Che();
 		che.setDescription(description1);

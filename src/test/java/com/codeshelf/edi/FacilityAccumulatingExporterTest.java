@@ -446,7 +446,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 	
 	private Che firstChe(Facility facility) {
 		Che firstChe = null;
-		for (CodeshelfNetwork network : facility.getNetworks()) {
+		for (CodeshelfNetwork network : facility.getNetworks().values()) {
 			for (Che che : network.getChes().values()) {
 				firstChe = che;
 				break;

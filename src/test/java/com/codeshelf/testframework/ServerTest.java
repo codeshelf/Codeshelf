@@ -352,7 +352,7 @@ public abstract class ServerTest extends HibernateTest {
 
 	protected List<WorkInstruction> startWorkFromBeginning(Facility facility, String cheName, String containers) {
 		// Now ready to run the cart
-		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		CodeshelfNetwork theNetwork = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		Che theChe = theNetwork.getChe(cheName);
 
 		workService.setUpCheContainerFromString(theChe, containers);

@@ -71,7 +71,7 @@ public class PutwallTest extends MockDaoTest {
 		Facility facility= Facility.createFacility(fName, "TEST", Point.getZeroPoint());
 		importAislesData(facility, csvString);
 		
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		LedController controller1 = network.findOrCreateLedController(fName, new NetGuid("0x00000011"));
 		String uuid1 = controller1.getPersistentId().toString();
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");

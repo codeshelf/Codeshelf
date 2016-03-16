@@ -83,7 +83,7 @@ public class CsDeviceManagerTest extends MockDaoTest {
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
 
-		CodeshelfNetwork network=facility.getNetworks().get(0);
+		CodeshelfNetwork network=facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		deviceManager.attached(network);
 		
 		// DEV-459  additions. Need at least one associated CHE to see a CHE display message. Critical for above tests of disconnect or unattached.

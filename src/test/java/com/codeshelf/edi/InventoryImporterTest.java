@@ -649,7 +649,7 @@ public class InventoryImporterTest extends ServerTest {
 		// Let's find our CHE
 		// this.getPersistenceService().beginTransaction();
 		Assert.assertTrue(this.getTenantPersistenceService().hasAnyActiveTransactions());
-		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		CodeshelfNetwork theNetwork = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		Assert.assertNotNull(theNetwork);
 		Che theChe = theNetwork.getChe(cheId1);
 		Assert.assertNotNull(theChe);
@@ -817,7 +817,7 @@ public class InventoryImporterTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 		// Let's find our CHE
-		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		CodeshelfNetwork theNetwork = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		Assert.assertNotNull(theNetwork);
 		Che theChe = theNetwork.getChe(cheId1);
 		Assert.assertNotNull(theChe);

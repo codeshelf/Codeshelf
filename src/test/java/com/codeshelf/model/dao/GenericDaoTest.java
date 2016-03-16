@@ -141,7 +141,7 @@ public class GenericDaoTest extends ServerTest {
 		facility1.setDescription(FACILITY_ID);
 		Facility.staticGetDao().store(facility1);
 
-		CodeshelfNetwork network = facility1.getNetworks().get(0);
+		CodeshelfNetwork network = facility1.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		String NETWORK_ID = network.getDomainId();
 		this.tenantPersistenceService.commitTransaction();
 

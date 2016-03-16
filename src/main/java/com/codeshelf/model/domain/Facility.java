@@ -110,6 +110,7 @@ public class Facility extends Location {
 	@Getter
 	private List<EdiGateway>				ediGateways		= new ArrayList<EdiGateway>();
 
+	@Getter
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	@MapKey(name = "domainId")
 	private Map<String, CodeshelfNetwork>	networks		= new HashMap<String, CodeshelfNetwork>();
@@ -210,6 +211,14 @@ public class Facility extends Location {
 
 	public void setFacilityId(String inFacilityId) {
 		setDomainId(inFacilityId);
+	}
+	
+	public List<Che> getChes(){
+		ArrayList<Che> ches = new ArrayList<>();
+		for (CodeshelfNetwork network : networks.values()) {
+			ches.addAll(network.getChes().values());
+		}
+		return ches;
 	}
 
 	public void addAisle(Aisle inAisle) {
@@ -408,10 +417,6 @@ public class Facility extends Location {
 			LOGGER.error("cannot remove CodeshelfNetwork " + inNetworkId + " from " + this.getDomainId()
 					+ " because it isn't found in children");
 		}
-	}
-
-	public List<CodeshelfNetwork> getNetworks() {
-		return new ArrayList<CodeshelfNetwork>(networks.values());
 	}
 
 	@Override
@@ -1182,7 +1187,7 @@ public class Facility extends Location {
 
 	public Set<User> getSiteControllerUsers() {
 		Set<User> users = new HashSet<User>();
-		for (CodeshelfNetwork network : this.getNetworks()) {
+		for (CodeshelfNetwork network : networks.values()) {
 			users.addAll(network.getSiteControllerUsers());
 		}
 		return users;

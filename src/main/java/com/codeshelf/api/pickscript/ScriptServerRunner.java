@@ -31,6 +31,7 @@ import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.ExtensionPoint;
@@ -509,7 +510,7 @@ public class ScriptServerRunner {
 		CheLightingEnum.valueOf(cheLighting);
 		
 		//Create or update CHE
-		Che che = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), domainId);
+		Che che = Che.staticGetDao().findByDomainId(facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME), domainId);
 		if (che == null) {
 			uiUpdateBehavior.addChe(facility.getPersistentId().toString(), domainId, null, color, controllerId, mode, scannerType, cheLighting);
 		} else {

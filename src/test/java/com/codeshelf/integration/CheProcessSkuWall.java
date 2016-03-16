@@ -72,7 +72,7 @@ public class CheProcessSkuWall extends ServerTest{
 		t1_1.setTapeIdUi("0001");
 		t2_1.setTapeIdUi("0002");
 		
-		CodeshelfNetwork network = facility.getNetworks().get(0);
+		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		LedController controller = network.findOrCreateLedController("PosMan1", new NetGuid(POSMANID1));
 		controller.setDeviceType(DeviceType.Poscons);
 		b1.setPosconAssignment(controller.getPersistentId().toString(), "1");
