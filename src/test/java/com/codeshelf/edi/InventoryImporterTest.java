@@ -24,6 +24,7 @@ import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WiFactory;
@@ -41,6 +42,7 @@ import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -918,6 +920,143 @@ public class InventoryImporterTest extends ServerTest {
 		}
 		
 		this.getTenantPersistenceService().commitTransaction();
+	}
+
+
+	/**
+	 * gets/modifies the serverTest facility.
+	 */
+	private Facility getSmallSlottedFacility(){
+		beginTransaction();
+		Facility facility = getFacility();
+		String aisleString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,\r\n" //
+				+ "Bay,B1,244,,,,,\r\n" //
+				+ "Tier,T1,,5,80,0,,\r\n"; //
+		importAislesData(facility, aisleString);
+		commitTransaction();
+		
+		beginTransaction();
+		facility = facility.reload();
+		// Aliases named as Splendid/Ella Moss DC
+		String csvString2 = "mappedLocationId,locationAlias\r\n" //
+				+ "A1.B1.T1.S1, S1604B01\r\n" // 
+				+ "A1.B1.T1.S2, S1604B02\r\n" // 
+				+ "A1.B1.T1.S3, S1604B03\r\n" // 
+				+ "A1.B1.T1.S4, S1604B04\r\n" // 
+				+ "A1.B1.T1.S5, S1604B05\r\n"; // 
+		importLocationAliasesData(facility, csvString2);		
+		commitTransaction();
+		return facility;
+	}
+	
+	/**
+	 * Test the VFCorp Splendid Ella Moss DC case of rereading inventory with small changes.
+	 * 
+	 */
+	@Test
+	public final void testSlottedInventoryReadMod() {
+
+		Facility facility = getSmallSlottedFacility();
+		
+		// Very important. Our EACHMULT default to false, which on import does not allow an item/uom to exist in separate locations.
+		// Does not log on file import bump!  Should warn.
+		beginTransaction();
+		facility = facility.reload();
+		String value = PropertyBehavior.getProperty(facility, FacilityPropertyType.EACHMULT);
+		LOGGER.info("Default EACHMULT value is {}", value);
+		Assert.assertFalse(Boolean.parseBoolean(value));
+		// Comment next line to see the behavior
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.EACHMULT, "true");
+		LOGGER.info("Setting EACHMULT value to true");
+		
+		commitTransaction();
+		
+		LOGGER.info("1: Reading first small inventory file");
+		beginTransaction();
+		facility = facility.reload();
+		String csvString = "itemId,locationId,description,quantity,uom,gtin\r\n" //
+				+ "1123,S1604B01,description 1123,2,EA,gtin1123\r\n" //
+				+ "1124,S1604B01,description 1124,4,EA,gtin1124\r\n" // 1123 and 1124 in same slot
+				+ "1125,S1604B02,description 1125,3,EA,gtin1125\r\n" //
+				+ "1125,S1604B03,description 1125,11,EA,tin1125\r\n" //	1125 in two slots
+				+ "1126,S1604B04,description 1126,6,EA,tin1126\r\n" //
+				+ "1127,S1604B05,description 1127,5,EA,tin1127\r\n" ; //
+
+		setupInventoryData(facility, csvString);
+		commitTransaction();
+		
+		beginTransaction();
+		facility = facility.reload();
+		Location locationB01 = facility.findSubLocationById("S1604B01");
+		Assert.assertNotNull(locationB01);
+		
+		Item item1123B01 = locationB01.getStoredItemFromMasterIdAndUom("1123", "EA");
+		Assert.assertNotNull(item1123B01);
+		
+		Item item1124B01 = locationB01.getStoredItemFromMasterIdAndUom("1124", "EA");
+		Assert.assertNotNull(item1124B01);
+		
+		Location locationB03 = facility.findSubLocationById("S1604B03");
+		Assert.assertNotNull(locationB03);
+		Location locationB02 = facility.findSubLocationById("S1604B02");
+		Assert.assertNotNull(locationB02);
+		Location locationB05 = facility.findSubLocationById("S1604B05");
+		Assert.assertNotNull(locationB05);
+
+		Item item1127B05 = locationB05.getStoredItemFromMasterIdAndUom("1127", "EA");
+		Assert.assertNotNull(item1127B05);		
+		Item item1125B03 = locationB03.getStoredItemFromMasterIdAndUom("1125", "EA");
+		Assert.assertNotNull(item1125B03);
+		// If EACHMULT is false, separate item1125B02 not found.
+		Item item1125B02 = locationB02.getStoredItemFromMasterIdAndUom("1125", "EA");
+		Assert.assertNotNull(item1125B02);
+		
+		// Save some persistent IDs
+		UUID item1123B01persID = item1123B01.getPersistentId();
+		UUID item1124B01persID = item1124B01.getPersistentId();
+		UUID item1125B02persID = item1125B02.getPersistentId();
+		UUID item1127B05persID = item1127B05.getPersistentId();
+		
+		commitTransaction();
+		
+		// Now read almost the same file again. We want to see if anything went away.
+		LOGGER.info("2: Reading slightly changed small inventory file");
+		beginTransaction();
+		facility = facility.reload();
+		// item 1123 in B01 changed count.
+		// item 1124 from B01 is gone.
+		// item 1125 in B02 is gone
+		String csvString2 = "itemId,locationId,description,quantity,uom,gtin\r\n" //
+				+ "1123,S1604B01,description 1123,1,EA,gtin1123\r\n" //
+				+ "1125,S1604B03,description 1125,11,EA,tin1125\r\n" //	1125 in two slots
+				+ "1126,S1604B04,description 1126,6,EA,tin1126\r\n" //
+				+ "1127,S1604B05,description 1127,5,EA,tin1127\r\n" ; //
+		setupInventoryData(facility, csvString2);
+		commitTransaction();
+		
+		beginTransaction();
+		facility = facility.reload();
+		
+		// Which can be found by persistent ID?
+		Item itemA = Item.staticGetDao().findByPersistentId(item1123B01persID);
+		Assert.assertNotNull(itemA);
+		Assert.assertEquals(itemA.getQuantity(), new Double(1));
+		// this itemA test proves we found and updated the existing item.
+		
+		// For VFCorp small DC, we would like itemB to be gone.
+		Item itemB = Item.staticGetDao().findByPersistentId(item1124B01persID);
+		Assert.assertNotNull(itemB);
+		LOGGER.info("1124 from B01 has location {}", itemB.getItemLocationName());
+		
+		Item itemC = Item.staticGetDao().findByPersistentId(item1125B02persID);
+		Assert.assertNotNull(itemC);
+		Item itemD = Item.staticGetDao().findByPersistentId(item1127B05persID);
+		Assert.assertNotNull(itemD);
+		
+		
+		commitTransaction();
+
 	}
 
 }
