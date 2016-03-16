@@ -288,6 +288,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 						this.deviceManager.disconnected();
 						break;
 					case SHUTDOWN:
+						LOGGER.warn("Shut down Site Controller");
 						System.exit(0);
 						break;
 				}

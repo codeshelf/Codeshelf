@@ -449,6 +449,7 @@ public class UiUpdateBehavior implements IApiBehavior {
 		if (controller == null) {
 			FormUtility.throwUiValidationException("Site Controller", "Server Error: Site Controller " + uuid + " not found", ErrorCode.GENERAL);
 		}
+		LOGGER.warn("Delete site controller {}", controller.getDomainId());
 
 		controller.getParent().removeSiteController(controller.getDomainId());
 		restartSiteController(uuid);
@@ -459,6 +460,7 @@ public class UiUpdateBehavior implements IApiBehavior {
 		if (controller == null) {
 			FormUtility.throwUiValidationException("Site Controller", "Server Error: Site Controller " + uuid + " not found", ErrorCode.GENERAL);
 		}
+		LOGGER.warn("Make site controller {} primary", controller.getDomainId());
 
 		//Update all site controllers on the network
 		CodeshelfNetwork network = controller.getParent();

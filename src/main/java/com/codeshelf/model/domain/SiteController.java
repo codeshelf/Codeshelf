@@ -105,6 +105,16 @@ public class SiteController extends WirelessDeviceABC {
 		return getParent().getChannel().toString();
 	}
 
+	public String getRoleUi(){
+		if (getRole() == SiteControllerRole.NETWORK_PRIMARY) {
+			return "PRIMARY";
+		} else if (getRole() == SiteControllerRole.STANDBY) {
+			return "STANDBY";
+		} else {
+			return "UNKNOWN";
+		}
+	}
+
 	public void setLocation(String location) {
 		this.location = location;
 		setDescription("Site Controller for " + location);

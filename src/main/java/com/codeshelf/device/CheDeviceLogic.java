@@ -2480,7 +2480,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		} else if (this instanceof ChePalletizerDeviceLogic) {
 			deviceType = "PALLETIZER";
 		}
-		sendDisplayCommand("Site " + mDeviceManager.getUsername() + ", CH " + mDeviceManager.getChannel(), "Device: " + deviceType, EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
+		Short chOld = mDeviceManager.getChannel();
+		String line1 = String.format("Site %s, ch %d (%d)", mDeviceManager.getUsername(), chOld + 10, chOld);
+		sendDisplayCommand(line1, "Device: " + deviceType, EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
 	}
 
 	@Override

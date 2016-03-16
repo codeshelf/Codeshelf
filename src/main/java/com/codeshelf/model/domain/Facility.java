@@ -480,7 +480,7 @@ public class Facility extends Location {
 			CodeshelfNetwork network = getPrimaryNetwork();
 			Collection<SiteController> siteControllers = network.getSiteControllers().values();
 			if (siteControllers.size() > 1) {
-				String msg = "More than one Site Controller exist in " + network.getDomainId() + " network. Use Site Cntrollers list.";
+				String msg = "More than one Site Controller exist in " + network.getDomainId() + " network. Use Site Controllers list.";
 				LOGGER.warn(msg);
 				FormUtility.throwUiValidationException("Primary Site Controller ID", msg, ErrorCode.FIELD_CUSTOM_MESSAGE);
 			}
