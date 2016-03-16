@@ -60,26 +60,24 @@ import com.google.common.collect.ImmutableMap;
 public class InventoryImporterTest extends ServerTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(InventoryImporterTest.class);
 
-	UUID facilityForVirtualSlottingId;
+	UUID						facilityForVirtualSlottingId;
 
 	@Override
 	public void doBefore() {
 		super.doBefore();
 		this.getTenantPersistenceService().beginTransaction();
 
-		VirtualSlottedFacilityGenerator facilityGenerator =
-					new VirtualSlottedFacilityGenerator(
-														createAisleFileImporter(),
-														createLocationAliasImporter(),
-														createOrderImporter());
-		
+		VirtualSlottedFacilityGenerator facilityGenerator = new VirtualSlottedFacilityGenerator(createAisleFileImporter(),
+			createLocationAliasImporter(),
+			createOrderImporter());
+
 		Facility facilityForVirtualSlotting = facilityGenerator.generateFacilityForVirtualSlotting(testName.getMethodName());
-		
+
 		this.facilityForVirtualSlottingId = facilityForVirtualSlotting.getPersistentId();
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	@Test
 	public final void testInventoryImporterFromCsvStream() {
 		this.getTenantPersistenceService().beginTransaction();
@@ -95,11 +93,11 @@ public class InventoryImporterTest extends ServerTest {
 		// retrieve via aisle
 		Bay bay = Bay.as(aisle.findSubLocationById("B1"));
 		Assert.assertNotNull("Bay is undefined", bay);
-		
+
 		// retrieve via facility		
 		bay = Bay.as(facility.findSubLocationById("A1.B1"));
 		Assert.assertNotNull("Bay is undefined", bay);
-		
+
 		Item item = bay.getStoredItemFromMasterIdAndUom("3001", "each");
 		Assert.assertNotNull(item);
 		ItemMaster itemMaster = item.getParent();
@@ -131,7 +129,6 @@ public class InventoryImporterTest extends ServerTest {
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,A,each,A1.B1,111,2012-09-26 11:31:01\r\n";
 		Facility facility = setupInventoryData(facilityForVirtualSlotting, csvString);
-		
 
 		Item item = facility.findSubLocationById("A1.B1").getStoredItemFromMasterIdAndUom("3001", "each");
 		Assert.assertNotNull(item);
@@ -169,7 +166,7 @@ public class InventoryImporterTest extends ServerTest {
 	public final void testMultipleNonEachItemInstancesInventoryImporterFromCsvStream() {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
-		
+
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,100,case,A1.B1,111,2012-09-26 11:31:01\r\n" //
 				+ "3001,3001,Widget,100,case,A1.B2,111,2012-09-26 11:31:01\r\n";
@@ -212,8 +209,7 @@ public class InventoryImporterTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	
-	@SuppressWarnings({"unused" })
+	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testBayAnchors() {
 		this.getTenantPersistenceService().beginTransaction();
@@ -283,7 +279,7 @@ public class InventoryImporterTest extends ServerTest {
 				+ "1124,D402,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,8,101\r\n" //
 				+ "1125,D403,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55,102\r\n" //
 				+ "1126,D502,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55,103\r\n" //
-				+ "1127,D503,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,55,103\r\n" ; // Updating SKU / UOM
+				+ "1127,D503,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,55,103\r\n"; // Updating SKU / UOM
 
 		setupInventoryData(facility, csvString);
 
@@ -291,34 +287,34 @@ public class InventoryImporterTest extends ServerTest {
 		Assert.assertNotNull(locationD402);
 		Location locationD403 = facility.findSubLocationById("D403");
 		Assert.assertNotNull(locationD403);
-		
+
 		Item item1124Loc402CS = locationD402.getStoredItemFromMasterIdAndUom("1124", "CS");
 		Assert.assertNotNull(item1124Loc402CS);
 		Item item1125Loc403CS = locationD403.getStoredItemFromMasterIdAndUom("1125", "CS");
 		Assert.assertNotNull(item1125Loc403CS);
-		
+
 		Gtin item1124gtin = item1124Loc402CS.getGtin();
 		Assert.assertNotNull(item1124gtin);
-		
+
 		Gtin item1125gtin = item1125Loc403CS.getGtin();
 		Assert.assertNotNull(item1125gtin);
-		
+
 		// Check SKU / UOM update
 		Location locationD502 = facility.findSubLocationById("D502");
 		Assert.assertNotNull(locationD502);
 		Location locationD503 = facility.findSubLocationById("D503");
 		Assert.assertNotNull(locationD503);
-		
+
 		Item item1126 = locationD502.getStoredItemFromMasterIdAndUom("1126", "CS");
 		Assert.assertNotNull(item1126);
 		Item item1127 = locationD503.getStoredItemFromMasterIdAndUom("1127", "EA");
 		Assert.assertNotNull(item1127);
-		
+
 		Gtin item1126gtin = item1126.getGtin();
 		Assert.assertNotNull(item1126gtin);
 		Gtin item1127gtin = item1127.getGtin();
 		Assert.assertNull(item1127gtin);
-		
+
 		// Check that the gtin uom and the item uom have stayed the same
 		UomMaster item1126Uom = item1126.getUomMaster();
 		Assert.assertNotNull(item1126Uom);
@@ -329,7 +325,7 @@ public class InventoryImporterTest extends ServerTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	@Test
 	public final void testNonSlottedGtinInventory2() {
 		this.getTenantPersistenceService().beginTransaction();
@@ -341,10 +337,10 @@ public class InventoryImporterTest extends ServerTest {
 				+ "1125,D403,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55,101\r\n" //
 				+ "1125,D403,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55,102\r\n" //	Updating the GTIN
 				+ "1127,D503,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55,103\r\n" //
-				+ "1127,D503,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,55,103\r\n" ; // Updating UOM
+				+ "1127,D503,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,55,103\r\n"; // Updating UOM
 
 		setupInventoryData(facility, csvString);
-		
+
 		/*
 		 * Updating the UOM of an existing item with an existing GTIN.
 		 * 	- Should create a new item (old item will still exist)
@@ -353,17 +349,17 @@ public class InventoryImporterTest extends ServerTest {
 		 */
 		Location locationD503 = facility.findSubLocationById("D503");
 		Assert.assertNotNull(locationD503);
-		
+
 		Item item1127Loc503EA = locationD503.getStoredItemFromMasterIdAndUom("1127", "EA");
 		Assert.assertNotNull(item1127Loc503EA);
 		Item item1127Loc503CS = locationD503.getStoredItemFromMasterIdAndUom("1127", "CS");
 		Assert.assertNotNull(item1127Loc503CS);
-		
+
 		Gtin item1127EAgtin = item1127Loc503EA.getGtin();
 		Assert.assertNull(item1127EAgtin);
 		Gtin item1127CSgtin = item1127Loc503CS.getGtin();
-		Assert.assertNotNull(item1127CSgtin); 
-		
+		Assert.assertNotNull(item1127CSgtin);
+
 		/*
 		 * Here we created a new GTIN for an exiting item.
 		 * In the future we need to add a database restraint to keep this from happening.
@@ -372,7 +368,7 @@ public class InventoryImporterTest extends ServerTest {
 		 * Currently when calling getGtin() we return the first GTIN with the correct unit of measure.
 		 * If there are multiple GTINs under the ItemMaster with the same UOM we may return the incorrect GTIN
 		 */
-		
+
 		/*
 		Location locationD403 = facility.findSubLocationById("D403");
 		Assert.assertNotNull(locationD403);
@@ -384,7 +380,7 @@ public class InventoryImporterTest extends ServerTest {
 		*/
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testNonSlottedInventory() {
@@ -408,7 +404,6 @@ public class InventoryImporterTest extends ServerTest {
 				+ "1123,D403,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,135\r\n"; //
 
 		setupInventoryData(facility, csvString);
-
 
 		// How do you find the inventory items made?
 		// other unit tests do it like this:
@@ -504,7 +499,6 @@ public class InventoryImporterTest extends ServerTest {
 
 		setupInventoryData(facility, csvString);
 
-
 		// item1123 for EA in D402 which is the A2.B1.T1. 135 cm from left of 230 cm aisle
 		Location locationA2B2T1 = facility.findSubLocationById("A2.B2.T1");
 		Assert.assertNotNull(locationA2B2T1);
@@ -550,7 +544,6 @@ public class InventoryImporterTest extends ServerTest {
 				+ "1123,D403,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55\r\n"; //
 
 		setupInventoryData(facility, csvString);
-
 
 		Location locationD403 = facility.findSubLocationById("D403");
 		Assert.assertNotNull(locationD403);
@@ -608,9 +601,9 @@ public class InventoryImporterTest extends ServerTest {
 		Assert.assertNotNull(item1123Loc402EA);
 
 		// A brief side trip to check the list we use for lighting inventory in a tier
-		List<Item>  invList = locationD502.getInventoryInWorkingOrder();
+		List<Item> invList = locationD502.getInventoryInWorkingOrder();
 		Assert.assertTrue(invList.size() == 2);
-		commitTransaction();	
+		commitTransaction();
 
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Item 1123 exists in case and each.
@@ -631,7 +624,7 @@ public class InventoryImporterTest extends ServerTest {
 
 		// We should have one order with 3 details. Only 2 of which are fulfillable.
 		beginTransaction();
-		facility = facility.reload();		
+		facility = facility.reload();
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
 
 		Assert.assertNotNull(order);
@@ -646,7 +639,7 @@ public class InventoryImporterTest extends ServerTest {
 		}
 		Assert.assertEquals(2, itemLocations.size());
 		// this.getPersistenceService().commitTransaction();
-		
+
 		// Let's find our CHE
 		// this.getPersistenceService().beginTransaction();
 		Assert.assertTrue(this.getTenantPersistenceService().hasAnyActiveTransactions());
@@ -672,7 +665,7 @@ public class InventoryImporterTest extends ServerTest {
 		theChe = Che.staticGetDao().reload(theChe);
 		// Set up a cart for order 12345, which will generate work instructions
 		workService.setUpCheContainerFromString(theChe, "12345");
-		
+
 		// Just checking variant case hard on ebeans. What if we immediately set up again? Answer optimistic lock exception and assorted bad behavior.
 		// facility.setUpCheContainerFromString(theChe, "12345");
 
@@ -712,14 +705,13 @@ public class InventoryImporterTest extends ServerTest {
 		Assert.assertNotNull(wiDetail);
 		OrderHeader wiOrderHeader = wiDetail.getParent();
 		Assert.assertNotNull(wiOrderHeader);
-		Assert.assertEquals(facility, TenantPersistenceService.<Facility>deproxify(wiOrderHeader.getParent()));
-		
+		Assert.assertEquals(facility, TenantPersistenceService.<Facility> deproxify(wiOrderHeader.getParent()));
+
 		// Complete one of the jobs
 		workService.fakeCompleteWi(wi2.getPersistentId().toString(), "COMPLETE");
 
 		//Test our work instruction summarizer
-		List<WiSetSummary> summaries = workService.workAssignedSummary(theChe.getPersistentId(),
-			facility.getPersistentId());
+		List<WiSetSummary> summaries = workService.workAssignedSummary(theChe.getPersistentId(), facility.getPersistentId());
 
 		// as this test, this facility only set up this one che, there should be only one wi set. But we have 3. How?
 		Assert.assertEquals(1, summaries.size());
@@ -733,8 +725,7 @@ public class InventoryImporterTest extends ServerTest {
 		Assert.assertEquals(1, completes);
 		Assert.assertEquals(1, actives);
 
-		List<WiSetSummary> summaries2 = workService.workCompletedSummary(theChe.getPersistentId(),
-			facility.getPersistentId());
+		List<WiSetSummary> summaries2 = workService.workCompletedSummary(theChe.getPersistentId(), facility.getPersistentId());
 
 		// as this test, this facility only set up this one che, there should be only one wi set. But we have 3. How?
 		Assert.assertEquals(1, summaries.size());
@@ -754,9 +745,7 @@ public class InventoryImporterTest extends ServerTest {
 	@SuppressWarnings("unused")
 	private void assertAutoShort(Che theChe, Timestamp assignedTimestamp) {
 		List<WorkInstruction> wiPlusAutoShort = WorkInstruction.staticGetDao().findByFilter("workInstructionByCheAndAssignedTime",
-			 ImmutableMap.<String, Object>of(
-				 "cheId", theChe.getPersistentId(),
-				 "assignedTimestamp", assignedTimestamp));
+			ImmutableMap.<String, Object> of("cheId", theChe.getPersistentId(), "assignedTimestamp", assignedTimestamp));
 		boolean foundOne = false;
 		for (WorkInstruction workInstruction : wiPlusAutoShort) {
 			if (workInstruction.getStatus().equals(WorkInstructionStatusEnum.SHORT)) {
@@ -833,7 +822,7 @@ public class InventoryImporterTest extends ServerTest {
 		facility = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 		theChe = Che.staticGetDao().findByPersistentId(theChe.getPersistentId());
 		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(theChe, ""); // get all in working order
-		
+
 		for (WorkInstruction wi : wiListAfterScan) {
 			LOGGER.info("WI LIST CONTAINS: " + wi.toString());
 		}
@@ -866,14 +855,13 @@ public class InventoryImporterTest extends ServerTest {
 			LOGGER.error("fix testSameProductPick"); // use a wi with an item, a proper pick
 			return;
 		}
-		
+
 		// Just a check. The wi led stream is presumably serialized correctly. Let's look at it and verify.
 		String reference1 = wi1.getLedCmdStream();
 		LOGGER.info("  wi cmd stream: " + reference1);
 		List<LedCmdGroup> wi1LedCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(reference1);
 		Assert.assertTrue(LedCmdGroupSerializer.verifyLedCmdGroupList(wi1LedCmdGroups));
 
-		
 		// Now we have an item. Mimic how the code works for lightOneItem
 		Location location = theItem.getStoredLocation();
 		List<LedCmdGroup> ledCmdGroupList = WiFactory.getLedCmdGroupListForItemOrLocation(theItem, ColorEnum.RED, location);
@@ -882,18 +870,17 @@ public class InventoryImporterTest extends ServerTest {
 			return;
 		}
 		// Test serializer and deserializer and verify that all LED commands have a position.
-		Assert.assertTrue(LedCmdGroupSerializer.verifyLedCmdGroupList(ledCmdGroupList));		
-		String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);		
+		Assert.assertTrue(LedCmdGroupSerializer.verifyLedCmdGroupList(ledCmdGroupList));
+		String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
 		LOGGER.info("item cmd stream: " + theLedCommands);
-	
+
 		List<LedCmdGroup> dsLedCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(theLedCommands);
 		Assert.assertTrue(LedCmdGroupSerializer.verifyLedCmdGroupList(dsLedCmdGroups));
-
 
 		LedController theController = location.getEffectiveLedController();
 		if (theController != null) {
 			String theGuidStr = theController.getDeviceGuidStr();
-			LightLedsInstruction instruction = new LightLedsInstruction(theGuidStr, (short)1, 5, ledCmdGroupList);
+			LightLedsInstruction instruction = new LightLedsInstruction(theGuidStr, (short) 1, 5, ledCmdGroupList);
 			LedInstrListMessage message = new LedInstrListMessage(instruction);
 			// check encode and decode of the message similar to how the jetty socket does it.
 			JsonEncoder encoder = new JsonEncoder();
@@ -903,7 +890,7 @@ public class InventoryImporterTest extends ServerTest {
 			} catch (EncodeException e) {
 				LOGGER.error("testSameProductPick Json encode", e);
 			}
-			
+
 			JsonDecoder decoder = new JsonDecoder();
 			MessageABC decodedMessage = null;
 			try {
@@ -912,20 +899,19 @@ public class InventoryImporterTest extends ServerTest {
 				LOGGER.error("testSameProductPick Json decode", e);
 			}
 			Assert.assertTrue(decodedMessage instanceof LedInstrListMessage);
-			message = (LedInstrListMessage)decodedMessage;
+			message = (LedInstrListMessage) decodedMessage;
 			instruction = message.getInstructions().get(0);
 			String djsonLedCmdGroupsString = instruction.getLedCommands();
 			Assert.assertTrue(LightLedsInstruction.verifyCommandString(djsonLedCmdGroupsString));
 		}
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
-
 
 	/**
 	 * gets/modifies the serverTest facility.
 	 */
-	private Facility getSmallSlottedFacility(){
+	private Facility getSmallSlottedFacility() {
 		beginTransaction();
 		Facility facility = getFacility();
 		String aisleString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -934,7 +920,7 @@ public class InventoryImporterTest extends ServerTest {
 				+ "Tier,T1,,5,80,0,,\r\n"; //
 		importAislesData(facility, aisleString);
 		commitTransaction();
-		
+
 		beginTransaction();
 		facility = facility.reload();
 		// Aliases named as Splendid/Ella Moss DC
@@ -944,11 +930,11 @@ public class InventoryImporterTest extends ServerTest {
 				+ "A1.B1.T1.S3, S1604B03\r\n" // 
 				+ "A1.B1.T1.S4, S1604B04\r\n" // 
 				+ "A1.B1.T1.S5, S1604B05\r\n"; // 
-		importLocationAliasesData(facility, csvString2);		
+		importLocationAliasesData(facility, csvString2);
 		commitTransaction();
 		return facility;
 	}
-	
+
 	/**
 	 * Test the VFCorp Splendid Ella Moss DC case of rereading inventory with small changes.
 	 * 
@@ -957,7 +943,7 @@ public class InventoryImporterTest extends ServerTest {
 	public final void testSlottedInventoryReadMod() {
 
 		Facility facility = getSmallSlottedFacility();
-		
+
 		// Very important. Our EACHMULT default to false, which on import does not allow an item/uom to exist in separate locations.
 		// Does not log on file import bump!  Should warn.
 		beginTransaction();
@@ -968,9 +954,9 @@ public class InventoryImporterTest extends ServerTest {
 		// Comment next line to see the behavior
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.EACHMULT, "true");
 		LOGGER.info("Setting EACHMULT value to true");
-		
+
 		commitTransaction();
-		
+
 		LOGGER.info("1: Reading first small inventory file");
 		beginTransaction();
 		facility = facility.reload();
@@ -980,22 +966,22 @@ public class InventoryImporterTest extends ServerTest {
 				+ "1125,S1604B02,description 1125,3,EA,gtin1125\r\n" //
 				+ "1125,S1604B03,description 1125,11,EA,tin1125\r\n" //	1125 in two slots
 				+ "1126,S1604B04,description 1126,6,EA,tin1126\r\n" //
-				+ "1127,S1604B05,description 1127,5,EA,tin1127\r\n" ; //
+				+ "1127,S1604B05,description 1127,5,EA,tin1127\r\n"; //
 
 		setupInventoryData(facility, csvString);
 		commitTransaction();
-		
+
 		beginTransaction();
 		facility = facility.reload();
 		Location locationB01 = facility.findSubLocationById("S1604B01");
 		Assert.assertNotNull(locationB01);
-		
+
 		Item item1123B01 = locationB01.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123B01);
-		
+
 		Item item1124B01 = locationB01.getStoredItemFromMasterIdAndUom("1124", "EA");
 		Assert.assertNotNull(item1124B01);
-		
+
 		Location locationB03 = facility.findSubLocationById("S1604B03");
 		Assert.assertNotNull(locationB03);
 		Location locationB02 = facility.findSubLocationById("S1604B02");
@@ -1004,21 +990,21 @@ public class InventoryImporterTest extends ServerTest {
 		Assert.assertNotNull(locationB05);
 
 		Item item1127B05 = locationB05.getStoredItemFromMasterIdAndUom("1127", "EA");
-		Assert.assertNotNull(item1127B05);		
+		Assert.assertNotNull(item1127B05);
 		Item item1125B03 = locationB03.getStoredItemFromMasterIdAndUom("1125", "EA");
 		Assert.assertNotNull(item1125B03);
 		// If EACHMULT is false, separate item1125B02 not found.
 		Item item1125B02 = locationB02.getStoredItemFromMasterIdAndUom("1125", "EA");
 		Assert.assertNotNull(item1125B02);
-		
+
 		// Save some persistent IDs
 		UUID item1123B01persID = item1123B01.getPersistentId();
 		UUID item1124B01persID = item1124B01.getPersistentId();
 		UUID item1125B02persID = item1125B02.getPersistentId();
 		UUID item1127B05persID = item1127B05.getPersistentId();
-		
+
 		commitTransaction();
-		
+
 		// Now read almost the same file again. We want to see if anything went away.
 		LOGGER.info("2: Reading slightly changed small inventory file");
 		beginTransaction();
@@ -1027,35 +1013,49 @@ public class InventoryImporterTest extends ServerTest {
 		// item 1124 from B01 is gone.
 		// item 1125 in B02 is gone
 		String csvString2 = "itemId,locationId,description,quantity,uom,gtin\r\n" //
-				+ "1123,S1604B01,description 1123,1,EA,gtin1123\r\n" //
-				+ "1125,S1604B03,description 1125,11,EA,tin1125\r\n" //	1125 in two slots
+				+ "1123,S1604B01,description 1123,1,EA,gtin1123\r\n" // // count changed on ths
+				+ "1125,S1604B03,description 1125,11,EA,tin1125\r\n" //	1125 in BO3 did not change at all
 				+ "1126,S1604B04,description 1126,6,EA,tin1126\r\n" //
-				+ "1127,S1604B05,description 1127,5,EA,tin1127\r\n" ; //
+				+ "1127,S1604B05,description 1127,5,EA,tin1127\r\n"; // 1127 in B05 did not change at all
 		setupInventoryData(facility, csvString2);
 		commitTransaction();
-		
+
 		beginTransaction();
 		facility = facility.reload();
-		
+
 		// Which can be found by persistent ID?
 		Item itemA = Item.staticGetDao().findByPersistentId(item1123B01persID);
 		Assert.assertNotNull(itemA);
 		Assert.assertEquals(itemA.getQuantity(), new Double(1));
 		// this itemA test proves we found and updated the existing item.
-		
+
 		// For VFCorp small DC, we would like itemB to be gone.
 		Item itemB = Item.staticGetDao().findByPersistentId(item1124B01persID);
 		Assert.assertNotNull(itemB);
 		LOGGER.info("1124 from B01 has location {}", itemB.getItemLocationName());
-		
+
+		boolean expectArchive = false; // set to match InventoryCsvImporter.archiveUnreadInventory
+		if (expectArchive)
+			Assert.assertFalse(itemB.getActive());
+		else
+			Assert.assertTrue(itemB.getActive());
+		// Is it still findable from the normal APIs?
+		Item item1124B01_x = locationB01.getStoredItemFromMasterIdAndUom("1124", "EA");
+		Assert.assertNotNull(item1124B01_x);
+		// getStoredItemFromMasterIdAndUom() does find it. Not sure it should.
+		// WorkBehavior calls
+		// Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(path, uomStr);
+		// which obviously will skip inactive items.
+
 		Item itemC = Item.staticGetDao().findByPersistentId(item1125B02persID);
 		Assert.assertNotNull(itemC);
+		
 		Item itemD = Item.staticGetDao().findByPersistentId(item1127B05persID);
 		Assert.assertNotNull(itemD);
-		
-		
+		Assert.assertTrue(itemD.getActive());
+	
+
 		commitTransaction();
 
 	}
-
 }

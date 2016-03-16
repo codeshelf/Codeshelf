@@ -206,7 +206,9 @@ task siteControllerJar (type: Jar) {
 }
 
 task classpath {
-     print configurations.runtime.asPath
+  doLast {
+    println configurations.runtime.asPath
+  }
 }
 
 task copyRuntimeDeps(type: Copy) {
