@@ -66,7 +66,7 @@ public enum ScheduledJobType {
 	DropboxCheck(DropboxGatewayHealthCheck.class,
 			"Test Dropbox connection.",
 			"0 */10 * * * ?",
-			true,
+			false,
 			true,
 			ScheduledJobCategory.CHECK),
 	EdiHealthCheck(EdiHealthCheck.class,
