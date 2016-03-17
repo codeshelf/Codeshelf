@@ -43,7 +43,6 @@ import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.EventTypeParam;
 import com.codeshelf.api.BaseResponse.IntervalParam;
@@ -83,6 +82,7 @@ import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvWorkerImporter;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
+import com.codeshelf.metrics.FacilityHealthCheckResult;
 import com.codeshelf.model.DataPurgeParameters;
 import com.codeshelf.model.ReplenishItem;
 import com.codeshelf.model.WiFactory.WiPurpose;
@@ -96,7 +96,6 @@ import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.scheduler.ApplicationSchedulerService;
-import com.codeshelf.scheduler.CachedHealthCheckResults;
 import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ParameterSetBeanABC;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
@@ -704,10 +703,9 @@ public class FacilityResource {
 		//Test if Site Controller is running
 		try {
 			persistence.beginTransaction();
-			new ActiveSiteControllerHealthCheck(webSocketManagerService).check(facility);
-			Result siteHealth = CachedHealthCheckResults.getJobResult(ActiveSiteControllerHealthCheck.class.getSimpleName());
-			if (!siteHealth.isHealthy()) {
-				errorMesage.setMessageError("Site controller problem: " + siteHealth.getMessage());
+			FacilityHealthCheckResult result = new ActiveSiteControllerHealthCheck(webSocketManagerService).checkResult(facility);
+			if (!result.isHealthy()) {
+				errorMesage.setMessageError("Site controller problem: " + result.getMessage());
 				return errorMesage;
 			}
 		} finally {

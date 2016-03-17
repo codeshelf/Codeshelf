@@ -44,6 +44,14 @@ public abstract class HealthCheckRefreshJob extends AbstractFacilityJob {
 
 	protected abstract void check(Facility facility) throws Exception;
 
+	protected void saveResults(FacilityHealthCheckResult result) {
+		saveResults(result.getFacility(), result.isPass(), result.getMessage());
+	}
+
+	protected void saveResults(Facility facility, boolean success, String messageFormat, Object...messageArgs ) {
+		saveResults(facility, success, String.format(messageFormat, messageArgs));
+	}
+
 	protected void saveResults(Facility facility, boolean success, String message) {
 		String jobName = getClass().getSimpleName();
 		String logMessage = String.format("Job %s completed %ssuccessfully for facility %s: %s",

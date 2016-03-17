@@ -9,13 +9,11 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import javax.websocket.CloseReason;
 import javax.websocket.CloseReason.CloseCodes;
 import javax.websocket.Session;
-
-import lombok.Getter;
-import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +33,9 @@ import com.codeshelf.ws.protocol.request.PingRequest;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+
+import lombok.Getter;
+import lombok.Setter;
 
 public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 
@@ -462,4 +463,10 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 		return Scheduler.newFixedDelaySchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
 	}
 
+	public Stream<UserContext> getConnectedUsers() {
+		return getWebSocketConnections().stream()
+			.filter(WebSocketConnection::isActive)
+			.filter(WebSocketConnection::isAuthenticated)
+			.map(WebSocketConnection::getCurrentUserContext);
+	}
 }

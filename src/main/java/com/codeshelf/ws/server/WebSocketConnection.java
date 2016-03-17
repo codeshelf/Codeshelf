@@ -17,9 +17,6 @@ import javax.websocket.CloseReason;
 import javax.websocket.CloseReason.CloseCodes;
 import javax.websocket.Session;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import org.apache.mina.util.ConcurrentHashSet;
 import org.eclipse.jetty.websocket.api.WebSocketException;
 import org.slf4j.Logger;
@@ -44,6 +41,9 @@ import com.codeshelf.security.UserContext;
 import com.codeshelf.ws.protocol.message.CheStatusMessage;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.common.util.concurrent.Service;
+
+import lombok.Getter;
+import lombok.Setter;
 
 public class WebSocketConnection implements IDaoListener {
 	public enum State {
@@ -156,10 +156,6 @@ public class WebSocketConnection implements IDaoListener {
 			LOGGER.error("Unexpected exception encoding/sending {} message", message.getClass().getSimpleName(), e);
 		}
 		return sent;
-	}
-
-	public boolean isAuthenticated() {
-		return (currentUserContext != null);
 	}
 
 	@Override
@@ -524,5 +520,13 @@ public class WebSocketConnection implements IDaoListener {
 				TenantPersistenceService.getInstance().rollbackAnyActiveTransactions();
 			}
 		}
+	}
+
+	public boolean isActive() {
+		return State.ACTIVE.equals(getLastState());
+	}
+	
+	public boolean isAuthenticated() {
+		return (getCurrentUserContext() != null);
 	}
 }
