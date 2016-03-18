@@ -53,7 +53,9 @@ public class FacilitySchedulerServiceTest {
 		
 		UserContext systemUser = CodeshelfSecurityManager.getUserContextSYSTEM();
 		Tenant tenant = mock(Tenant.class);
+		when(tenant.getName()).thenReturn("testtenant");
 		facility = mock(Facility.class);
+		when(facility.getDomainId()).thenReturn("testfacility");
 		
 		when(facility.getTimeZone()).thenReturn(TimeZone.getTimeZone(TimeZone.getAvailableIDs()[1]));
 		subject = new FacilitySchedulerService(scheduler, systemUser, tenant, facility);

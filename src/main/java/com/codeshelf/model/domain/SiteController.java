@@ -123,7 +123,7 @@ public class SiteController extends WirelessDeviceABC {
 	public User getUser(){
 		User user = TenantManagerService.getInstance().getUser(getDomainId());
 		if (user == null) {
-			LOGGER.warn("Couldn't find user for site controller " + getDomainId());
+			LOGGER.warn("user not found for site controller {}", getDomainId());
 		}
 		return user;
 	}
@@ -133,12 +133,14 @@ public class SiteController extends WirelessDeviceABC {
 	}
 	
 	public void shutdown(){
-		Set<User> users = new HashSet<>();
 		User user = getUser();
 		if (user != null) {
+			Set<User> users = new HashSet<>();
 			users.add(user);
+			SiteControllerOperationMessage shutdownMessage = new SiteControllerOperationMessage(SiteControllerTask.SHUTDOWN);
+			WebSocketManagerService.getInstance().sendMessage(users, shutdownMessage);
+		} else {
+			LOGGER.warn("Unable to shutdown {}, no user account found", this);
 		}
-		SiteControllerOperationMessage shutdownMessage = new SiteControllerOperationMessage(SiteControllerTask.SHUTDOWN);
-		WebSocketManagerService.getInstance().sendMessage(users, shutdownMessage);
 	}
 }
