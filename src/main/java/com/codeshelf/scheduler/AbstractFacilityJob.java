@@ -5,6 +5,7 @@ import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
+import com.codeshelf.application.ContextLogging;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.Facility;
 
@@ -18,7 +19,12 @@ public abstract class AbstractFacilityJob implements Job, InterruptableJob {
 	final public void execute(JobExecutionContext context) throws JobExecutionException {
 		Facility facility = (Facility) context.getMergedJobDataMap().get("facility");
 		Tenant tenant = (Tenant) context.getMergedJobDataMap().get("tenant");
-		doFacilityExecute(tenant, facility);
+		try {
+			ContextLogging.setTenantNameAndFacilityId(tenant.getName(), facility.getDomainId());
+			doFacilityExecute(tenant, facility);
+		} finally {
+			ContextLogging.setTenantNameAndFacilityId(null, null);
+		}
 	}
 
 	protected abstract Object doFacilityExecute(Tenant tenant, Facility facility) throws JobExecutionException;

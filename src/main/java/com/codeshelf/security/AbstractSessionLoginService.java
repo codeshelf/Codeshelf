@@ -79,7 +79,7 @@ public abstract class AbstractSessionLoginService extends AbstractHmacTokenServi
 				response = new TokenSession(Status.LOGIN_NOT_ALLOWED, user);
 			}
 		} else {
-			LOGGER.info("User not found {}", user);
+			LOGGER.info("User not found {}", username);
 			response = new TokenSession(Status.BAD_CREDENTIALS, null);
 		}
 		

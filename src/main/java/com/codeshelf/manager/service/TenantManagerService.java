@@ -312,7 +312,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				}
 
 			} else {
-				LOGGER.warn("user not found: " + username);
+				LOGGER.debug("user not found: {}", username);
 			}
 		} finally {
 			managerPersistenceService.commitTransaction();
