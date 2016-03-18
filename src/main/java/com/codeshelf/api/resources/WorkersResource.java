@@ -40,6 +40,7 @@ import com.sun.jersey.api.core.ResourceContext;
 public class WorkersResource extends CRUDResource<Worker, Facility>{
 	private static Set<String> updatableProperties = ImmutableSet.of(
 			"active",
+			"domainId",
 			"firstName",
 			"lastName",
 			"middleInitial",

@@ -143,6 +143,9 @@ public abstract class CRUDResource<T extends IDomainObjectTree<P>, P extends IDo
 	public Response update(@PathParam("id") String id, MultivaluedMap<String, String> params) {
 		SecurityUtils.getSubject().checkPermission(permissionPrefix + ":edit");
 		T object = doGetById(id);
+		if (object == null) {
+			throw new WebApplicationException(Status.NOT_FOUND);
+		}
 		try {
 			String inDomainId = ParameterUtils.getDomainId(params);
 			if (newDomainIdExists(object, inDomainId)) {
