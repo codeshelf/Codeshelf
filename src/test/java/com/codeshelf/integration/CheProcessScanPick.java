@@ -189,7 +189,9 @@ public class CheProcessScanPick extends ServerTest {
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 
-		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		PropertyBehavior.setProperty(getFacility(),
+			FacilityPropertyType.WORKSEQR,
+			WorkInstructionSequencerType.BayDistance.toString());
 
 		commitTransaction();
 		return facility;
@@ -286,8 +288,7 @@ public class CheProcessScanPick extends ServerTest {
 	}
 
 	/**
-	 * Test UPC scan
-	 * LOCAPICK off. This is location based pick with UPC scan
+	 * Test location based pick with UPC scan
 	 */
 	@Test
 	public final void testPickWithUpcScan() throws IOException {
@@ -329,7 +330,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		LOGGER.info("2c: Look at server version of all picks list");
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
 		this.logWiList(serverWiList);
 		commitTransaction();
@@ -353,10 +354,10 @@ public class CheProcessScanPick extends ServerTest {
 	*/
 	@Test
 	public final void testInventoryCommand() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		beginTransaction();
+		facility = facility.reload();
 		setUpLineScanOrdersNoCntr(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		this.startSiteController();
 
@@ -364,17 +365,16 @@ public class CheProcessScanPick extends ServerTest {
 
 		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
-		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId.");
+		LOGGER.info("1a: Import the orders file, with containerId.");
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		Assert.assertNotNull(facility);
-		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(true));
 
 		setUpLineScanOrdersNoCntrWithGtin(facility);
 		PropertyBehavior.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		picker.loginAndSetup("Picker #1");
 
@@ -430,15 +430,15 @@ public class CheProcessScanPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.IDLE, 1000);
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 
-		LOGGER.info("2a: check that item 100 stayed in it's original location");
+		LOGGER.info("2a: check that item 100 never was made");
 		Location locationD301 = facility.findSubLocationById("D301");
 		Assert.assertNotNull(locationD301);
 		Item item1123locD301 = locationD301.getStoredItemFromMasterIdAndUom("1123", "ea");
-		Assert.assertNotNull(item1123locD301);
+		Assert.assertNull(item1123locD301);
 
-		LOGGER.info("2b: check that item 1122 moved from D301 to D302");
+		LOGGER.info("2b: check that item 1122 created at D302");
 		Location locationD302 = facility.findSubLocationById("D302");
 		Assert.assertNotNull(locationD302);
 		locationD301 = facility.findSubLocationById("D301");
@@ -455,7 +455,6 @@ public class CheProcessScanPick extends ServerTest {
 		Item item1522LocD301 = locationD301.getStoredItemFromMasterIdAndUom("1522", "ea");
 		Assert.assertNull(item1522LocD301);
 
-		// LOGGER.info("2c: check that item 1124 (GTIN 106) moved even though it scanned as 00106");
 		LOGGER.info("2c: check that item 1124 (GTIN 106) did not move as it scanned as 00106");
 		// v20 undid this unwise DEV-937 case
 		Location locationD402 = facility.findSubLocationById("D402");
@@ -465,7 +464,7 @@ public class CheProcessScanPick extends ServerTest {
 		Item item1124locD501 = locationD501.getStoredItemFromMasterIdAndUom("1124", "ea");
 		Item item1124locD402 = locationD402.getStoredItemFromMasterIdAndUom("1124", "ea");
 		Assert.assertNull(item1124locD402);
-		Assert.assertNotNull(item1124locD501);
+		Assert.assertNull(item1124locD501);
 
 		commitTransaction();
 
@@ -476,9 +475,9 @@ public class CheProcessScanPick extends ServerTest {
 	 */
 	@Test
 	public final void testInventoryCommand2() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		setUpLineScanOrdersNoCntr(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		this.startSiteController();
 
@@ -486,17 +485,16 @@ public class CheProcessScanPick extends ServerTest {
 
 		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
-		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId.");
+		LOGGER.info("1a: Import the orders file, with containerId.");
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		Assert.assertNotNull(facility);
-		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(true));
 
 		setUpLineScanOrdersNoCntrWithGtin(facility);
 		PropertyBehavior.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		LOGGER.info("0a: scan INVENTORY and make sure we stay idle");
 		picker.scanCommand("INVENTORY");
@@ -517,14 +515,14 @@ public class CheProcessScanPick extends ServerTest {
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		beginTransaction();
+		facility = facility.reload();
 		LOGGER.info("1e: check that the item with GTIN 200 exists at D302");
 		Location D302 = facility.findSubLocationById("D302");
 		Assert.assertNotNull(D302);
 		Item item200 = D302.getStoredItemFromMasterIdAndUom("200", "ea");
 		Assert.assertNotNull(item200);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		LOGGER.info("2a: scan invalid commands");
 		picker.scanCommand("SETUP");
@@ -566,31 +564,29 @@ public class CheProcessScanPick extends ServerTest {
 	 */
 	@Test
 	public final void testNotScanPick() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		setUpLineScanOrdersNoCntr(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		this.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		beginTransaction();
+		facility = facility.reload();
 		Assert.assertNotNull(facility);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
 		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
-		LOGGER.info("1a: Set LOCAPICK, then import the orders file again, with containerId");
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		Assert.assertNotNull(facility);
-		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(true));
+		LOGGER.info("1a: Import the orders file again, with containerId");
+		beginTransaction();
+		facility = facility.reload();
 
 		setUpLineScanOrdersWithCntr(facility);
 		PropertyBehavior.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		picker.loginAndSetup("Picker #1");
 
@@ -610,15 +606,15 @@ public class CheProcessScanPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 
 		// verify position index
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		beginTransaction();
+		facility = facility.reload();
 		Container c1 = Container.staticGetDao().findByDomainId(facility, "12345");
 		ContainerUse cu1 = ContainerUse.staticGetDao().findByDomainId(c1, "12345");
 		Assert.assertTrue(cu1.getPosconIndex() == 1);
 		Container c2 = Container.staticGetDao().findByDomainId(facility, "11111");
 		ContainerUse cu2 = ContainerUse.staticGetDao().findByDomainId(c2, "11111");
 		Assert.assertTrue(cu2.getPosconIndex() == 2);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		List<WorkInstruction> scWiList = picker.getAllPicksList();
 		Assert.assertEquals(3, scWiList.size());
@@ -636,7 +632,7 @@ public class CheProcessScanPick extends ServerTest {
 	@Test
 	public final void testScanPick() throws IOException {
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		setUpLineScanOrdersNoCntr(facility);
 		commitTransaction();
 
@@ -646,12 +642,11 @@ public class CheProcessScanPick extends ServerTest {
 
 		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
-		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId. Also set SCANPICK");
+		LOGGER.info("1a: Import the orders file, with containerId. Also set SCANPICK");
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		Assert.assertNotNull(facility);
-		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(true));
 		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.SCANPICK, "SKU");
 		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
@@ -667,7 +662,7 @@ public class CheProcessScanPick extends ServerTest {
 		LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
 		Assert.assertNotEquals("SKU", manager.getScanTypeValue());
 		// We would rather have the device manager know from the SCANPICK parameter update, but that does not happen yet in the integration test.
-		// kludgy! Somewhat simulates restarting site controller
+		// kludgy! Old way of simulating restarting site controller. This is an old test.
 		manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
 		picker.forceDeviceToMatchManagerConfiguration();
@@ -874,17 +869,16 @@ public class CheProcessScanPick extends ServerTest {
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
-		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId. Also set SCANPICK");
+		LOGGER.info("1a: Set Import the orders file, with containerId. Also set SCANPICK");
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		beginTransaction();
+		facility = facility.reload();
 		Assert.assertNotNull(facility);
-		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(true));
 		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.SCANPICK, "SKU");
 
 		setUpLineScanOrdersWithCntr(facility);
 		PropertyBehavior.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		CsDeviceManager manager = this.getDeviceManager();
 		// We would rather have the device manager know from the SCANPICK parameter update,
@@ -924,20 +918,21 @@ public class CheProcessScanPick extends ServerTest {
 
 	@Test
 	public void missingLocationIdShouldHaveNoWork() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		String csvOrders = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom, locationId, workSequence"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, , 4000";
 		importOrdersData(facility, csvOrders);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		beginTransaction();
+		facility = facility.reload();
 		Assert.assertNotNull(facility);
-		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(false));
-		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.setProperty(getFacility(),
+			FacilityPropertyType.WORKSEQR,
+			WorkInstructionSequencerType.WorkSequence.toString());
 
 		PropertyBehavior.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		this.startSiteController();
 
@@ -964,13 +959,12 @@ public class CheProcessScanPick extends ServerTest {
 
 	@Test
 	public void preferredLocationGetsSecondItemInPath() throws IOException {
-		LOGGER.info("1a: Set LOCAPICK, then import the orders file again, with containerId");
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		LOGGER.info("1a: Import the orders file again, with containerId");
+		beginTransaction();
+		facility = facility.reload();
 		Assert.assertNotNull(facility);
-		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, Boolean.toString(true));
 		this.setUpOrdersItemsOnSamePath(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		this.startSiteController();
 
@@ -1059,7 +1053,6 @@ public class CheProcessScanPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, Boolean.toString(false));
 		// we are not setting SCANPICK for this test. Only about sequencing
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 
@@ -1067,16 +1060,16 @@ public class CheProcessScanPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		setUpOrdersWithCntrAndSequence(facility);
 		commitTransaction();
 
-		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set WORKSEQR");
+		LOGGER.info("1a: set SCANPICK, set WORKSEQR");
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		beginTransaction();
+		facility = facility.reload();
 		Assert.assertNotNull(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		this.startSiteController(); // after all the parameter changes
 
@@ -1098,25 +1091,17 @@ public class CheProcessScanPick extends ServerTest {
 		LOGGER.info("1c: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
 		picker.scanCommand("START");
 
-		// DEV-637 note. After that is implemented, we would get plans here even though LOCAPICK is off and we do not get any inventory.		
-		// Shouldn't we get work? We have supplied location, and sequence. 
-		//picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
+		// DEV-637 note. After that is implemented, we would get plans here even though we do not get any inventory.		
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 6000);
 
 		// logout back to idle state.
 		picker.logout();
 
-		LOGGER.info("2a: Redo, but with LOCAPICK on. SCANPICK, WORKSEQR as in case 1");
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		Assert.assertNotNull(facility);
-		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, Boolean.toString(true));
-		this.getTenantPersistenceService().commitTransaction();
-
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		LOGGER.info("2a: Redo, leaving SCANPICK, WORKSEQR as in case 1");
+		beginTransaction();
+		facility = facility.reload();
 		this.setUpOrdersWithCntrAndSequence(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		picker.loginAndSetup("Picker #1");
 
@@ -1168,12 +1153,11 @@ public class CheProcessScanPick extends ServerTest {
 
 	/**
 	 * Test for DEV-692, which skips scanning if we already scanned that SKU at that location.
-	 * LOCAPICK = false; SCANPICK = SKU; WORKSEQR = WorkSequence
+	 * SCANPICK = SKU; WORKSEQR = WorkSequence
 	 */
 	@Test
 	public final void testPfswebScanPicks() throws IOException {
 		beginTransaction();
-		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, Boolean.toString(false));
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "SKU");
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 		PropertyBehavior.turnOffHK(facility);
@@ -1183,7 +1167,7 @@ public class CheProcessScanPick extends ServerTest {
 		setUpOrdersWithCntrAndSequence(facility);
 		commitTransaction();
 
-		LOGGER.info("1a: conditions: LOCAPICK off, set SCANPICK, set WORKSEQR");
+		LOGGER.info("1a: conditions: set SCANPICK, set WORKSEQR");
 
 		this.startSiteController(); // after all the parameter changes
 
