@@ -937,7 +937,7 @@ public class InventoryImporterTest extends ServerTest {
 
 	/**
 	 * Test the VFCorp Splendid Ella Moss DC case of rereading inventory with small changes.
-	 * 
+	 * For DEV-1522
 	 */
 	@Test
 	public final void testSlottedInventoryReadMod() {

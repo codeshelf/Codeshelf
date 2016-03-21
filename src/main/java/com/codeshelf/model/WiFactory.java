@@ -335,9 +335,7 @@ public class WiFactory {
 			if (inOrderDetail.getItemMaster().getDdcId() != null) {
 				resultWi.doSetPickInstruction(inOrderDetail.getItemMaster().getDdcId());
 			} else {
-				// This is a little tricky with preferredLocation.
-				// If LOCAPICK was true, the inventory was made at the preferred location, so the wi location works normally
-				// If LOCAPICK was false, use the preferred location for the pick instruction, even though there is no such location.
+				// If the WMS gave us a preferredLocation, we will use that whether we know there is inventory there or not.
 				String locStr = resultWi.getLocationId();
 				if (locStr.isEmpty() && preferredLocation != null)
 					locStr = preferredLocation;
@@ -491,12 +489,9 @@ public class WiFactory {
 		// We expect to find an inventory item at the location. Be sure to get item and set posAlongPath always, before bailing out on the led command.
 		Double posAlongPath = null;
 		Item theItem = inLocation.getStoredItemFromMasterIdAndUom(inItemMasterId, inUomId);
-		if (theItem == null) {
-			//The below warning was removed due to DEV-695. The error was firing needlessly when LOCAPICK was off but the preferred location was specified.
-			//In the future, we'll need to handle moving preferred location whenever users move the Item in the UI
-			//LOGGER.warn("did not find item in setOutboundWorkInstructionLedPatternFromInventoryItem using location" );
+		if (theItem == null) {			
+			// If picking by inventory item, use the item's position along path. Normally, the location's.
 			posAlongPath = inLocation.getPosAlongPath();
-			//return;
 		} else {
 			// Set the pos along path using item as it may be an unslotted item
 			posAlongPath = theItem.getPosAlongPath();
