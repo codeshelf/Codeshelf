@@ -22,9 +22,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.model.EdiTransportType;
-import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.HeaderCounts;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.PickStrategyEnum;

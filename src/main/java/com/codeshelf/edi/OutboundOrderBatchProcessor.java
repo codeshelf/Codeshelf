@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.NotificationBehavior;
-import com.codeshelf.event.EventProducer;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PickStrategyEnum;
@@ -394,12 +393,17 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			inEdiProcessTime,
 			uomMaster,
 			inCsvBean.getGtin());
+		
+		// kind of sloppy. Need to do the two side effects on orderDetail and gtin.
+ 		@SuppressWarnings("unused")
 		OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
 		@SuppressWarnings("unused")
 		Gtin gtinMap = upsertGtin(inFacility, itemMaster, inCsvBean, uomMaster);
 
-		// If preferredLocation is there, we set it on the detail. LOCAPICK controls whether we also create new inventory to match.
-		if (importer.getLocaPick()) {
+		// If preferredLocation is there, we set it on the detail. This does nothing about making sure inventory is there. (Old LOCAPICK setting did).
+		/*
+		if (false ) {
+		
 			String locationValue = orderDetail.getPreferredLocation(); // empty string if location did not validate
 			if (locationValue != null && !locationValue.isEmpty()) {
 				// somewhat cloned from UiUpdateService.upsertItem(); Could refactor
@@ -416,8 +420,6 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				if (location == null)
 					LOGGER.error("Unexpected bad location in orderCsvBeanImport. Did not create item");
 				else {
-					// DEV-596 This is a very tricky question. If the item already existed, and there are no other order details that have the old preferredLocation
-					// then we would want to either move that inventory to the location, or archive the old and let the new one be made.
 					String oldStr = getOldPreferredLocation(); // is only set if the detail existed before and had a preferredLocation
 
 					boolean thisDetailHadOldDifferentPreferredLocation = (oldStr != null && !oldStr.isEmpty() && !oldStr.equals(locationValue));
@@ -430,26 +432,15 @@ public class OutboundOrderBatchProcessor implements Runnable {
 							// we would normally expect the old location to have an inventory item there.
 							LOGGER.info("Old location for changing orderdetail was " + oldStr);
 							oldItem = itemMaster.getActiveItemMatchingLocUom(oldLocation, uomMaster);
-							if (oldItem == null) {
-								/* Just debug aid */
-								LOGGER.error("probable error");
-								Collection<Item> locItems = oldLocation.getStoredItems().values();
-								List<Item> masterItems = itemMaster.getItems();
-								LOGGER.error("location has " + locItems.size() + " items. Master has " + masterItems.size());
-								if (locItems.size() == 1) {
-									Item fromMasterItems = masterItems.get(0);
-									LOGGER.error("fromLocItems: " + fromMasterItems.toLogString());
-								}
-								oldItem = itemMaster.getActiveItemMatchingLocUom(oldLocation, uomMaster); // just to step in again to see the uomMaster is not loaded						
 							}
 						}
-					}
 
 					// updateSlottedItem is going to make new inventory if location changed for cases, and also for each if EACHMULT is true
 					importer.updateSlottedItem(false, itemBean, location, inEdiProcessTime, itemMaster, uomMaster);
 				}
 			}
 		}
+		*/
 		try {
 			order.setUpdated(inEdiProcessTime);
 			order.reevaluateOrderAndDetails();

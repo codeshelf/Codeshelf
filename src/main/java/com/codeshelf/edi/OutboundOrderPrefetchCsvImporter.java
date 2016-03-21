@@ -59,10 +59,6 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 
 	@Getter
 	@Setter
-	private Boolean										locaPick				= null;
-
-	@Getter
-	@Setter
 	private Boolean										scanPick				= null;
 
 	@Getter
@@ -126,8 +122,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		for (String e : failedExtensions) {
 			results.addViolation("ExtensionService", null, "Extension failed to load and was deactivated: " + e);
 		}
-		// Get our LOCAPICK and SCANPICK configuration values. It will not change during importing one file.
-		this.locaPick = PropertyBehavior.getPropertyAsBoolean(facility, FacilityPropertyType.LOCAPICK);
+		// Get our SCANPICK configuration value. It will not change during importing one file.
 		this.scanPick = false;
 		String scanPickProp = PropertyBehavior.getProperty(facility, FacilityPropertyType.SCANPICK);
 		String defaultScanpick = FacilityPropertyType.SCANPICK.getDefaultValue();
