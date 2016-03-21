@@ -308,7 +308,7 @@ public class InventoryPickRunTest extends ServerTest {
 
 		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
 
@@ -325,7 +325,7 @@ public class InventoryPickRunTest extends ServerTest {
 
 		// Need more cases for BayDistanceTopLast.
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -377,10 +377,10 @@ public class InventoryPickRunTest extends ServerTest {
 		}
 		PropertyBehavior.turnOffHK(facility);
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		// Now ready to run the cart
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		CodeshelfNetwork theNetwork = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		Che theChe = theNetwork.getChe("CHE1");
@@ -398,7 +398,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 
 		PropertyBehavior.restoreHKDefaults(facility);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
@@ -432,8 +432,8 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		Item.staticGetDao().delete(item1124);
 
 		// Interesting and important. If this commit is not done here, the cart setup will still find undeleted items 1123 and 1124.
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		//
 
@@ -461,28 +461,25 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 
 		PropertyBehavior.restoreHKDefaults(facility);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public final void testLocationBasedPick() throws IOException {
-		// This is a very complete test of location-based pick. Do not need the integration test with site controller because
-		// Location-based pick is built via:
-		// - Creation of inventory during orders file read, then
-		// - Selection of the inventory items during computeWorkInstructions
+		// This is a fairly good test of location-based pick without site controller because
+		// Location-based pick is built via assuming somethign is at the position, and making the work instruction there.
 		// Once that is done, site controller just implements the work instructions that were made.
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = setUpSimpleNonSlottedFacility("InvLocP_01");
 		Assert.assertNotNull(facility);
 
-		LOGGER.info("1: Set LOCAPICK = true.  Leave EACHMULT = false");
-		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, "true");
-		this.getTenantPersistenceService().commitTransaction();
+		LOGGER.info("1: Leave EACHMULT = false");
+		commitTransaction();
 
 		LOGGER.info("2: Read the orders file, which has some preferred locations");
 		// This facility has aliases D26 ->D33 and D71->D74
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,gtin,type,locationId,cmFromLeft"
 				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D-27,61"
@@ -490,15 +487,15 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D-21,"
 				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshell,2,EA,,pick,D-71,";
 		importOrdersData(facility, csvString);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 		// This should give us inventory at D-27, D-28, and D-71, but not at D-21
 
 		LOGGER.info("3: Set up CHE for orders 10 and 11. Should get 3 jobs");
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		facility = Facility.staticGetDao().reload(facility);
 		
-		// Set the che on the path of the modeled locations
+		// Set the che on the path of the modeled locations. This is interesting. No inventory there. But matching up with modeled locations
 		setCheLocation(cheId1, "D-27");
 
 		PropertyBehavior.turnOffHK(facility);
@@ -515,10 +512,10 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 				+ "SKU0003,D-33,Spoon 6in.,80,Cs,6/25/14 12:00,\r\n"; //
 
 		importInventoryData(facility, csvString2);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		LOGGER.info("6: Set up CHE again for orders 10 and 11. Should really get 3 jobs, but has been getting 4");
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		facility = Facility.staticGetDao().reload(facility);
 		PropertyBehavior.turnOffHK(facility);
@@ -528,7 +525,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		theSize = wiList.size();
 		Assert.assertEquals((Integer) 4, theSize);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
