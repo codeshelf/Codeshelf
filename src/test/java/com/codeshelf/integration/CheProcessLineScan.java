@@ -251,7 +251,7 @@ public class CheProcessLineScan extends ServerTest {
 
 		super.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 
@@ -272,7 +272,7 @@ public class CheProcessLineScan extends ServerTest {
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.staticGetDao().store(che1);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
@@ -340,12 +340,12 @@ public class CheProcessLineScan extends ServerTest {
 
 		this.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
 
@@ -376,7 +376,7 @@ public class CheProcessLineScan extends ServerTest {
 		manager.setScanTypeValue("Disabled");
 		Assert.assertEquals("Disabled", manager.getScanTypeValue());
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
@@ -397,7 +397,7 @@ public class CheProcessLineScan extends ServerTest {
 
 		super.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 
@@ -418,7 +418,7 @@ public class CheProcessLineScan extends ServerTest {
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.staticGetDao().store(che1);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
@@ -663,17 +663,17 @@ public class CheProcessLineScan extends ServerTest {
 
 		Facility facility = setUpSmallNoSlotFacility();
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		setUpLineScanOrdersNoCntr(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		super.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
@@ -696,11 +696,11 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
 		LOGGER.info("2a: Import the orders file again, but with containerId");
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		setUpLineScanOrdersWithCntr(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		picker.loginAndSetup("Picker #1");
 
@@ -710,9 +710,8 @@ public class CheProcessLineScan extends ServerTest {
 		picker.setupContainer("11111", "2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 
-		LOGGER.info("2c: START. Work because location is resolvable even without inventory. (LOCAPICK was off, so not made).");
-		// This is important. We could in principle make these work instructions as a special case of location-based pick. 
-		// No inventory, but the order detail preferred location is resolvable, so we could do it
+		LOGGER.info("2c: START. Work because location is resolvable even without inventory..");
+		// This is important. We  make these work instructions as our normal case of location-based pick. 
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 
@@ -720,14 +719,13 @@ public class CheProcessLineScan extends ServerTest {
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
-		LOGGER.info("3a: Set LOCAPICK, then import the orders file again, with containerId");
-		this.getTenantPersistenceService().beginTransaction();
+		LOGGER.info("3a: import the orders file again, with containerId");
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, "true");
 		setUpLineScanOrdersWithCntr(facility);
 		PropertyBehavior.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		picker.loginAndSetup("Picker #1");
 
@@ -745,11 +743,11 @@ public class CheProcessLineScan extends ServerTest {
 		picker.scanLocation("D303");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
 		Assert.assertEquals(3, serverWiList.size());
 		logWiList(serverWiList);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		// logout back to idle state.
 		picker.logout();
@@ -759,7 +757,6 @@ public class CheProcessLineScan extends ServerTest {
 
 	/**
 	 * Login, scan a valid order detail ID, see the job.
-	 * LOCAPICK is false, so no attempt at inventory creation.
 	 * SCANPICK is set to SKU.
 	 */
 	@Test
@@ -788,12 +785,11 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(order);
 		OrderDetail detail = OrderDetail.staticGetDao().findByDomainId(order, "12345.3");
 		Assert.assertNotNull(detail);
-		
+
 		Assert.assertTrue(detail.getNeedsScan());
-		
+
 		commitTransaction();
 
-		
 		super.startSiteController();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
@@ -928,7 +924,6 @@ public class CheProcessLineScan extends ServerTest {
 
 	/**
 	 * Login, scan a valid order detail ID, see the job.
-	 * LOCAPICK is false, so no attempt at inventory creation.
 	 * SCANPICK is set to SKU.
 	 * Do some bad scans to make sure we handle those correctly
 	 */
@@ -1038,7 +1033,6 @@ public class CheProcessLineScan extends ServerTest {
 
 	/**
 	 * Login, scan a valid order detail ID, see the job.
-	 * LOCAPICK is false, so no attempt at inventory creation.
 	 * SCANPICK is set to SKU.
 	 */
 	@Test
@@ -1106,7 +1100,7 @@ public class CheProcessLineScan extends ServerTest {
 
 	/**
 	 * Login, scan a valid order detail ID, scan INVENTORY command.
-	 * LOCAPICK is true, so create inventory on order import.
+	 * No inventory on order import.
 	 */
 	@Test
 	public final void testInventoryScan() throws IOException {
@@ -1114,7 +1108,6 @@ public class CheProcessLineScan extends ServerTest {
 		Facility facility = setUpSmallNoSlotFacility();
 
 		beginTransaction();
-		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, "true");
 		commitTransaction();
 
 		beginTransaction();
@@ -1183,16 +1176,17 @@ public class CheProcessLineScan extends ServerTest {
 		picker.scanCommand("LOGOUT");
 		picker.waitForCheState(CheStateEnum.IDLE, 1000);
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 
 		LOGGER.info("2a: check that item 100 stayed in it's original location");
 		Location locationD301 = facility.findSubLocationById("D301");
 		Assert.assertNotNull(locationD301);
+		// There not an original 100, even though the orders file said to pick from there. Would only be made by inventory activity.
 		Item item1123locD301 = locationD301.getStoredItemFromMasterIdAndUom("1123", "ea");
-		Assert.assertNotNull(item1123locD301);
+		Assert.assertNull(item1123locD301);
 
-		LOGGER.info("2b: check that item 1123 moved from D301 to D302");
+		LOGGER.info("2b: check that item 1123 created at D302");
 		Location locationD302 = facility.findSubLocationById("D302");
 		Assert.assertNotNull(locationD302);
 		locationD301 = facility.findSubLocationById("D301");
@@ -1209,20 +1203,19 @@ public class CheProcessLineScan extends ServerTest {
 		Item item1522LocD301 = locationD301.getStoredItemFromMasterIdAndUom("1522", "ea");
 		Assert.assertNull(item1522LocD301);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	/**
 	 * Login, scan a valid order detail ID, scan INVENTORY command.
-	 * LOCAPICK is true, so create inventory on order import.
+	 * No inventory present. Still works.
 	 */
 	@Test
 	public final void testInventoryScan2() throws IOException {
 
 		Facility facility = setUpSmallNoSlotFacility();
 
-		this.getTenantPersistenceService().beginTransaction();
-		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, "true");
+		beginTransaction();
 
 		setUpLineScanOrdersNoCntrWithGtin(facility);
 
@@ -1233,7 +1226,7 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.staticGetDao().store(che1);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		startSiteController();
 
@@ -1258,18 +1251,18 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("1d: scan location. Should create item with GTIN at location D302");
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		// Intermittent failure here. Site controller may have returned immediately after sending the message to server.
 		waitForItemLocation(facility, "200", "D302", 4000);
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		LOGGER.info("1e: check that the item with GTIN 200 exists at D302");
 		Location D302 = facility.findSubLocationById("D302");
 		Assert.assertNotNull(D302);
 		Item item200 = D302.getStoredItemFromMasterIdAndUom("200", "ea");
 		Assert.assertNotNull(item200);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		LOGGER.info("2a: scan invalid commands");
 		picker.scanCommand("SETUP");
