@@ -247,7 +247,7 @@ public class DataArchiving extends ServerTest {
 	}
 
 	/**
-	 * LOCAPICK off. This is location based pick with no UPC scan, using WorkSequence
+	 * This is location based pick with no UPC scan, using WorkSequence
 	 */
 	@Test
 	public final void testArchiveReportAndPurge() throws IOException {

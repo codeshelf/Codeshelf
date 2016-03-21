@@ -237,7 +237,7 @@ public class CheProcessLineScan extends ServerTest {
 
 	/**
 	 * Basic login, logout, log in again, scan a valid order detail ID, see the job. Complete the job. Same scan again does not give you the job again.
-	 * LOCAPICK is false, so no inventory created at the location.
+	 * no inventory at the location.
 	 * Scanning detail 11111.1 with locationId D401, which is modeled.
 	 */
 	@Test
@@ -325,7 +325,7 @@ public class CheProcessLineScan extends ServerTest {
 
 	/**
 	 * Basic login, logout, log in again, scan a valid order detail ID, see the job. Complete the job. Same scan again does not give you the job again.
-	 * LOCAPICK is false, so no inventory created at the location.
+	 * no inventory created at the location.
 	 * Scanning detail 11111.1 with locationId D401, which is modeled.
 	 */
 
@@ -382,7 +382,7 @@ public class CheProcessLineScan extends ServerTest {
 
 	/**
 	 * Login, scan a valid order detail ID, see the job. Then assorted re-scans and clears.
-	 * LOCAPICK is false, so no attempt at inventory creation.
+	 * no inventory at the locations.
 	 * Scanning detail 12345.3 with locationId D601, which is not modeled.
 	 * Other scans of non-existent 44444.1, and of 11111.1 with modeled location D401
 	 */
@@ -503,7 +503,7 @@ public class CheProcessLineScan extends ServerTest {
 
 	/**
 	 * Login, scan a valid order detail ID, see the job.  Short it. Then assorted re-scans, clears, as well as successful short.
-	 * LOCAPICK is false, so no attempt at inventory creation.
+	 * no inventory at the locations.
 	 * Scanning detail 12345.3 with locationId D601, which is not modeled.
 	 * Other scans of non-existent 44444.1, and of 11111.1 with modeled location D401
 	 */
@@ -656,7 +656,7 @@ public class CheProcessLineScan extends ServerTest {
 
 	/**
 	 * Using the same data as linescan tests, try to setup up normal cart run
-	 * LOCAPICK is false, so no inventory created at the location.
+	 * Lno inventory at the locations.
 	 */
 	@Test
 	public final void testSetupOrderUnmodeledLocation() throws IOException {

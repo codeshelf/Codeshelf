@@ -30,12 +30,11 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
-		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set BayDistance");
+		LOGGER.info("1a: set SCANPICK, set BayDistance");
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, Boolean.toString(false));
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "Disabled");
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		PropertyBehavior.turnOffHK(facility);

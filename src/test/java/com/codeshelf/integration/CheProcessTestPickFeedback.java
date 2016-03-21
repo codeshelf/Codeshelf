@@ -825,7 +825,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		importOrdersData(facility, csvOrders);
 		commitTransaction();
 
-		LOGGER.info("1a: leave LOCAPICK off, set WORKSEQR, turn off housekeeping, set PICKMULT");
+		LOGGER.info("1a: set WORKSEQR, turn off housekeeping, set PICKMULT");
 		beginTransaction();
 		facility = facility.reload();
 		Assert.assertNotNull(facility);
@@ -894,7 +894,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		importOrdersData(facility, csvOrders);
 		commitTransaction();
 
-		LOGGER.info("1a: leave LOCAPICK off, set WORKSEQR, turn off housekeeping, set PICKMULT");
+		LOGGER.info("1a: set WORKSEQR, turn off housekeeping, set PICKMULT");
 		beginTransaction();
 		facility = facility.reload();
 		Assert.assertNotNull(facility);
@@ -1064,7 +1064,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		importOrdersData(facility, csvOrders);
 		commitTransaction();
 
-		LOGGER.info("1a: leave LOCAPICK off, set WORKSEQR, turn off housekeeping, set PICKMULT");
+		LOGGER.info("1a: set WORKSEQR, turn off housekeeping, set PICKMULT");
 		beginTransaction();
 		facility = facility.reload();
 		Assert.assertNotNull(facility);

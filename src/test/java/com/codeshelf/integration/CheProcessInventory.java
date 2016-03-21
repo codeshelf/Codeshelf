@@ -242,7 +242,6 @@ public class CheProcessInventory extends ServerTest {
 
 	/**
 	 * Login, scan a valid order detail ID, scan INVENTORY command.
-	 * LOCAPICK is true, so create inventory on order import.
 	 */
 	@Test
 	public final void testInventory() throws IOException {
@@ -262,7 +261,6 @@ public class CheProcessInventory extends ServerTest {
 
 		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		// LOCAPICK off
 		commitTransaction();
 
 		beginTransaction();

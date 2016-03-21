@@ -34,8 +34,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		Facility facility = setUpMultiPathFacilityWithOrders(cheLastScannedLocation);
 
 		beginTransaction();
-		LOGGER.info("1a: leave LOCAPICK off, SCANPICK off, set BayDistance, no housekeeping");
-		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, Boolean.toString(false));
+		LOGGER.info("1a: SCANPICK off, set BayDistance, no housekeeping");
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "Disabled");
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		PropertyBehavior.turnOffHK(facility);
