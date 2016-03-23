@@ -15,7 +15,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.FacilityPropertyType;
 // domain objects needed
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.TravelDirectionEnum;
@@ -33,12 +35,14 @@ import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.Vertex;
 import com.codeshelf.testframework.MockDaoTest;
+import com.codeshelf.testframework.ServerTest;
 
 /**
  * @author ranstrom
  * Also see createAisleTest() in FacilityTest.java
  */
-public class AisleImporterTest extends MockDaoTest {
+// v28: convert from MockDaoTest to ServerTest as MockDao did not do PropertyBehaviors
+public class AisleImporterTest extends ServerTest {
 
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(AisleImporterTest.class);
 
@@ -46,7 +50,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 	@Test
 	public final void testWalmartPalletLighting() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A49,,,,,tierB1S1Side,12.85,43.45,X,120,\r\n" //
@@ -89,13 +93,13 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertEquals(67, firstLed);
 		Assert.assertEquals(95, lastLed);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
 	@Test
 	public final void testTierB1S1Side() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A9,,,,,tierB1S1Side,12.85,43.45,X,120,\r\n" //
@@ -235,13 +239,13 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertEquals("", aisle2.getMetersFromLeft());
 		Assert.assertEquals("", bayA9B2.getMetersFromLeft());
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
 	@Test
 	public final void testTierNotB1S1Side() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// Beside tierNotB1S1Side, this as two aisles, so it makes sure both get their leds properly set, and both vertices set
 		// Not quite realistic; A10 and A20 are on top of each other. Same anchor point
@@ -395,14 +399,14 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertTrue(bayA10B1.isLowerLedNearAnchor());
 		Assert.assertTrue(aisle.isLowerLedNearAnchor());
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void test32Led5Slot() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// the purpose of bay B1 is to compare this slotting algorithm to Jeff's hand-done goodeggs zigzag slots
 		// the purpose of bay B2 is to check the sort and LEDs of more than 10 slots in a tier
@@ -522,14 +526,14 @@ public class AisleImporterTest extends MockDaoTest {
 		tierFirstLed = tierB10T1.getFirstLedNumAlongPath();
 		Assert.assertTrue(tierFirstLed == 155);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void testSparseLeds() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// Lasers are sparse: one led per slot
 		// Paul tested 8 leds for 5 slots and found bad behavior
@@ -628,13 +632,13 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertTrue(slotB1T5S5First == 7);
 		Assert.assertTrue(slotB1T5S5Last == 7);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
 	@Test
 	public final void testZigzagB1S1Side() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A12,,,,,zigzagB1S1Side,12.85,43.45,X,120,\r\n" //
@@ -697,13 +701,13 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertTrue(bayA12B1.isLowerLedNearAnchor());
 		Assert.assertTrue(aisle.isLowerLedNearAnchor());
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
 	@Test
 	public final void testZigzagNotB1S1Side() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -806,13 +810,13 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertTrue(bayA13B1.isLowerLedNearAnchor());
 		Assert.assertTrue(aisle.isLowerLedNearAnchor());
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
 	@Test
 	public final void testMultiAisleZig() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// We seemed to have a bug in the parse where when processing A21 beans, we have m values set for A22. That is, A21 might come out as zigzagNotB1S1Side
 		// So this tests Bay to bay attributes changing within an aisle, and tier attributes changing within a bay.
@@ -872,13 +876,13 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertTrue(pickX == 0.0);
 		Assert.assertTrue(pickY == 1.15);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
 	@Test
 	public final void testBadFile1() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// Ideally, we want non-throwing or caught exceptions that give good user feedback about what is wrong.
 		// This has tier before bay, and some other blank fields
@@ -937,8 +941,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Bay bayA9B1 = Bay.staticGetDao().findByDomainId(aisle9, "B1");
 		Assert.assertNotNull(bayA9B1); // ok, even with no tiers
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 		// Check for missing data
 		// The bays and aisles should be created
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -960,13 +964,13 @@ public class AisleImporterTest extends MockDaoTest {
 		Aisle A522 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNotNull(A522);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void testDoubleFileRead() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A15,,,,,tierNotB1S1Side,12.85,43.45,Y,120,\r\n" //
@@ -1078,13 +1082,13 @@ public class AisleImporterTest extends MockDaoTest {
 		Double yValue = thirdV.getPosY();
 		// Assert.assertTrue(yValue == 1.1); // new bay width 110 cm. But aisle is coming as 2.3 which is the original 2 bay value
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
 	@Test
 	public final void testAfterFileModifications() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// The file read does a lot. But then we rely on the user via the UI to do additional things to complete the configuration. This is
 		// a (nearly) end to end test of that. The actual UI will call a websocket command that calls a method on a domain object.
@@ -1203,8 +1207,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertTrue(tierB1T1.getEffectiveLedChannel() == 2);
 
 		// DEV-514 Let's persist now. tierB1T1 reference comes from the previous. As does aisle16 reference.
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 		// set on the old aisle reference. Does the old tier reference know?
 		aisle16.setControllerChannel(cntrlPersistIdStr55, "1");
 		// These fail!
@@ -1236,13 +1240,13 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertEquals("(000066)", tierCntrlUiField);
 		Assert.assertEquals("(2)", tierChannelUiField);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
 	@Test
 	public final void testNoLed() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1281,7 +1285,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Short ledValue3 = slotB2T1S1.getFirstLedNumAlongPath();
 		Assert.assertTrue(ledValue3 == 0);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
@@ -1292,7 +1296,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 	@Test
 	public final void testPathCreation() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		Facility facility = Facility.createFacility("F4X", "TEST", Point.getZeroPoint());
 
@@ -1351,13 +1355,13 @@ public class AisleImporterTest extends MockDaoTest {
 		value = helperGetPosAlongSegment(segment1, 25.0, 62.0);
 		Assert.assertEquals(value, (Double) 20.0);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
 	@Test
 	public final void simplestPathTest() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -1373,8 +1377,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Path aPath = createPathForTest(facility);
 		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.00, 48.45);
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 
 		String persistStr = segment0.getPersistentId().toString();
 		aisle51.associatePathSegment(persistStr);
@@ -1400,7 +1404,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotEquals(slot1Meters, slot4Meters); // one of these should be further along the path
 		Assert.assertTrue(slot1Meters > slot4Meters); // path goes right to left, so S4 lowest.
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
@@ -1408,7 +1412,7 @@ public class AisleImporterTest extends MockDaoTest {
 	public final void testCloneTierB1S1Aisle() {
 
 		// Test tierB1S1Side
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// tierB1S1Side Test 1
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1470,8 +1474,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
 		Assert.assertEquals((lastLed - firstLed) + 1, 32);
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 
 		// TierB1S1Side Test 2 - (no slots on B2T3)
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1532,14 +1536,14 @@ public class AisleImporterTest extends MockDaoTest {
 		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
 		Assert.assertEquals(40, (lastLed2 - firstLed2) + 1);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public final void testCloneTierNotB1S1Aisle() {
 
 		// Test tierNotB1S1Side
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// tierNotB1S1Side Test 1
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1602,8 +1606,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
 		Assert.assertEquals((lastLed - firstLed) + 1, 32);
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 
 		// TierNotB1S1Side Test 2 - (no slots on B2T3)
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1665,14 +1669,14 @@ public class AisleImporterTest extends MockDaoTest {
 		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
 		Assert.assertEquals(40, (lastLed2 - firstLed2) + 1);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public final void testCloneZigzagB1S1Aisle() {
 
 		// Test zigzagB1S1Side
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// zigzagB1S1Side Test 1
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1735,8 +1739,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
 		Assert.assertEquals((lastLed - firstLed) + 1, 32);
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 
 		// zigzagB1S1Side Test 2 - (no slots on B2T3)
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1798,13 +1802,13 @@ public class AisleImporterTest extends MockDaoTest {
 		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
 		Assert.assertEquals(40, (lastLed2 - firstLed2) + 1);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public final void testCloneZigzagNotB1S1Aisle() {
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// zigzagNotB1S1Side Test 1
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1868,8 +1872,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
 		Assert.assertEquals((lastLed - firstLed) + 1, 32);
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 
 		// zigzagNotB1S1Side Test 2 - (no slots on B2T3)
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1936,12 +1940,12 @@ public class AisleImporterTest extends MockDaoTest {
 		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
 		Assert.assertEquals(40, (lastLed2 - firstLed2) + 1);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public final void testCloneChangeAttributes() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		// Test if we can change the X,Y orientation in a clone
 		// A clone should not be able to change the X,Y orientation
 
@@ -1961,8 +1965,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(aisle52);
 		Assert.assertEquals(aisle52.isLocationXOriented(), true);
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 
 		// Test if we can change the depth
 		// A clone should not be able to change the depth
@@ -1980,8 +1984,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Vertex V3 = Vertex.staticGetDao().findByDomainId(aisle512, "V03");
 		Assert.assertEquals(120, (int) (V3.getPosY() * CM_PER_M));
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 		// Test if we can change the LED configuration
 		// A clone should not be able to change the LED configuration
 		// Will print out a warning to the user
@@ -1996,13 +2000,13 @@ public class AisleImporterTest extends MockDaoTest {
 		Aisle aisle513 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle513);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public final void testCloneAisle() {
 		// For DEV-618
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -2019,8 +2023,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Aisle aisle52 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNotNull(aisle52);
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 
 		// See the A51 and A52 have some of the same locations, and same Led numbers
 		Bay bayA51B1 = Bay.staticGetDao().findByDomainId(aisle51, "B1");
@@ -2044,8 +2048,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Short led52Value = slot52S4.getFirstLedNumAlongPath();
 		Assert.assertEquals(led51Value, led52Value);
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 
 		// Test Define -> clone defined -> clone defined
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -2107,8 +2111,8 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Assert.assertEquals((lastLed2 - firstLed2) + 1, 40);
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 
 		// Test define -> clone defined -> clone cloned
 
@@ -2134,8 +2138,8 @@ public class AisleImporterTest extends MockDaoTest {
 
 		//note 1
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 
 		// Test define -> clone defined -> define -> clone first defined
 		String csvString4 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -2165,13 +2169,13 @@ public class AisleImporterTest extends MockDaoTest {
 		Aisle aisle544 = Aisle.staticGetDao().findByDomainId(facility, "A54");
 		Assert.assertNotNull(aisle544);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public final void testBadCloneAisle() {
 		// For DEV-618
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// Should not be able to clone A51 because its definition is incorrect
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -2185,8 +2189,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Aisle A52 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNull(A52);
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 
 		// Should not be able to clone A51 because a bay definition inside is wrong
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -2202,8 +2206,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Aisle A522 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNull(A522);
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 
 		// Should not be able to define and clone an aisle in the same line.
 		// There should be a warning for doing this. Check logs.
@@ -2214,14 +2218,14 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Aisle,A51,Clone(A51),,,,,12.85,48.45,X,120\r\n";
 		importAislesData(facility, csvString3);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
 	@Test
 	public final void testBadCloneAisle2() {
 		// For DEV-618
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// - Check if we can clone a bay after a bay creation has failed (should not be able to)
 		// - Check if we can clone an aisle that had definition errors (should not be able to)
@@ -2252,8 +2256,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Bay A51B3 = Bay.staticGetDao().findByDomainId(A51, "B3");
 		Assert.assertNull(A51B3);
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 		// Check if we can clone an aisle that doesn't exist.
 		// This should produce useful error messages.
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -2269,13 +2273,13 @@ public class AisleImporterTest extends MockDaoTest {
 		Aisle A532 = Aisle.staticGetDao().findByDomainId(facility, "A53");
 		Assert.assertNull(A532);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public final void testCloneAisleSlotCount() {
 		// For DEV-618
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -2329,13 +2333,13 @@ public class AisleImporterTest extends MockDaoTest {
 		List<Location> slotsA52B1T2 = tierA52B1T2.getActiveChildren();
 		Assert.assertEquals(2, slotsA52B1T2.size());
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
 	@Test
 	public final void testCloneBay() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -2419,13 +2423,13 @@ public class AisleImporterTest extends MockDaoTest {
 		short lastLedT2 = tierA52B3T2.getLastLedNumAlongPath();
 		Assert.assertEquals(40, (lastLedT2 - firstLedT2) + 1);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	// FIXME
 	@Test
 	public final void testBadCloneBay() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -2447,8 +2451,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Bay bayA51B2 = Bay.staticGetDao().findByDomainId(aisle51, "B2");
 		Assert.assertNull(bayA51B2);
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 
 		// Check that we cannot clone nonexistent bays
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -2466,8 +2470,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Bay A512B3 = Bay.staticGetDao().findByDomainId(aisleA512, "B3");
 		Assert.assertNull(A512B3);
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 
 		// Check that we cannot define and clone the same bay in the same line.
 		// Check error logs for a warning about this. Nothing should be done.
@@ -2480,13 +2484,13 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B2,CLONE(B1),,,,,\r\n"; //
 		importAislesData(facility, csvString3);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
 	@Test
 	public final void testCloneBayOrderings() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -2558,8 +2562,8 @@ public class AisleImporterTest extends MockDaoTest {
 		List<Location> tiersA51B3 = bayA52B3.getActiveChildren();
 		Assert.assertEquals(1, tiersA51B3.size());
 
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		beginTransaction();
 
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -2608,12 +2612,12 @@ public class AisleImporterTest extends MockDaoTest {
 		short firstLedB3T2 = tierA51B3T22.getFirstLedNumAlongPath();
 		short lastLedB3T2 = tierA51B3T22.getLastLedNumAlongPath();
 		Assert.assertEquals(40, (lastLedB3T2 - firstLedB3T2) + 1);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public final void testPath() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// We seemed to have a bug in the parse where when processing A21 beans, we have m values set for A22. That is, A21 might come out as zigzagNotB1S1Side
 		// This also tests Bay to bay attributes changing within A31.
@@ -2688,9 +2692,9 @@ public class AisleImporterTest extends MockDaoTest {
 		String segmentId = segment0.getPersistentId().toString();
 		UUID facilityID = facility.getPersistentId();
 		aisle31.associatePathSegment(segmentId);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		checkLocations(facilityID, retrievedPathID, "F3X.1.0", aisle31);
 
 		// If you step into associatePathSegment, you will see that it finds the segment by UUID, and its location count was 1 and goes to 2.
@@ -2777,7 +2781,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertEquals("0.92", slotA32B1T1S1.getMetersFromLeft());
 		Assert.assertEquals("0", slotA32B1T1S5.getMetersFromLeft());
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
@@ -2807,7 +2811,7 @@ public class AisleImporterTest extends MockDaoTest {
 	@SuppressWarnings("unused")
 	@Test
 	public final void nonSlottedTest() {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// For tier-wise non-slotted inventory, we will support the same file format, but with zero tiers.
 
@@ -2841,9 +2845,9 @@ public class AisleImporterTest extends MockDaoTest {
 
 		String persistStr = segment0.getPersistentId().toString();
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		aisle61.associatePathSegment(persistStr);
 		// This should have recomputed all positions along path.  Aisle, bay, tier, and slots should have position now
 		// Although the old reference to aisle before path association would not.
@@ -2888,7 +2892,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotEquals(tierB1Meters, tierB2Meters); // tier spans the bay, so should be the same
 		// Bay1 and bay2 path position differ by about 1.15 meters;  bay is 115 cm long.
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
@@ -2897,7 +2901,7 @@ public class AisleImporterTest extends MockDaoTest {
 		// DAO-correct
 		// This was one common ebeans bug. This test gets references to the same slot at different times, and sees that they are all synchronized.
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		// Start with a file read to new facility
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A29,,,,,tierNotB1S1Side,12.85,43.45,Y,120,\r\n" //
@@ -2945,9 +2949,9 @@ public class AisleImporterTest extends MockDaoTest {
 		// true in database. False in this transaction, even though we really tried to get it straight from the DAO 
 
 		// Persist it by closing the transaction
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Assert.assertFalse(slotB1T1S5.getActive());
 		// Old reference. Now false in database, and false on this reference. Cannot tell if the reference actually got updated by hibernate.
 
@@ -2966,9 +2970,9 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertTrue(slotB1T1S5B.getActive()); // old reference is still active.
 
 		// close the transaction
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		Assert.assertTrue(slotB1T1S5.getActive());
 		Assert.assertTrue(slotB1T1S5B.getActive());
@@ -2981,7 +2985,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertTrue(slotB1T1S5.getActive());
 		Assert.assertTrue(slotB1T1S5B.getActive());
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 	}
 
@@ -2991,7 +2995,7 @@ public class AisleImporterTest extends MockDaoTest {
 		// Attempts to create various detached and reattach object scenarios 
 		// Need to add database queries to this later to see if and when change was persisted.
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		// Start with a file read to new facility
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -3003,32 +3007,32 @@ public class AisleImporterTest extends MockDaoTest {
 		Facility facility = Facility.createFacility("F-AISLE31", "TEST", Point.getZeroPoint());
 		importAislesData(facility, csvString);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 
 		List<Facility> listA = Facility.staticGetDao().getAll();
 		Facility facilityA = listA.get(0);
 		Slot slotB1T1S5 = (Slot) facilityA.findSubLocationById("A31.B1.T1.S5");
 		Assert.assertTrue(slotB1T1S5.getActive());
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		LOGGER.info("Case 1: Modify outside a transaction. Then store inside a transaction");
 		slotB1T1S5.setActive(false);
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		slotB1T1S5.setLedChannel((short) 2); // set another field, making it look more like a mistake may be.
 		Slot.staticGetDao().store(slotB1T1S5);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 		Assert.assertFalse(slotB1T1S5.getActive());
 
 		LOGGER.info("Case 2: multiple stores in the same transaction");
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		slotB1T1S5.setActive(true);
 		Slot.staticGetDao().store(slotB1T1S5);
 		slotB1T1S5.setLedChannel((short) 3);
 		Slot.staticGetDao().store(slotB1T1S5);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 		Assert.assertTrue(slotB1T1S5.getActive());
 		Assert.assertTrue(slotB1T1S5.getLedChannel() == 3);
 	}
@@ -3327,22 +3331,30 @@ public class AisleImporterTest extends MockDaoTest {
 		assertLeds(facility, "A77.B1", 4, 6);
 		Bay bay77_1 = (Bay) facility.findSubLocationById("A77.B1");
 		Assert.assertNotNull(bay77_1);
-		
+
 		// Tests of WiFactory.getEffectiveLightableLocation(). This is what is used to find the indicator light
 		// This work from DEV-1529. See that getEffectiveLightableLocation() does not check if controller/channel not set.
 		Location slot = facility.findSubLocationById("A77.B1.T1.S1");
 		Location tier = facility.findSubLocationById("A77.B1.T1");
+		// Property default does not find lightable parents
 		Location effectiveLoc = WiFactory.getEffectiveLightableLocation(slot);
-		Assert.assertEquals(bay77_1, effectiveLoc);
+		Assert.assertEquals(slot, effectiveLoc);
 		Location effectiveLoc2 = WiFactory.getEffectiveLightableLocation(tier);
+		Assert.assertEquals(tier, effectiveLoc2);
+
+		// Now set the property
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.INDICATOR, PropertyBehavior.INDICATOR_PROPERTY_ALLJOBS);
+		effectiveLoc = WiFactory.getEffectiveLightableLocation(slot);
+		Assert.assertEquals(bay77_1, effectiveLoc);
+		effectiveLoc2 = WiFactory.getEffectiveLightableLocation(tier);
 		Assert.assertEquals(bay77_1, effectiveLoc2);
-		
+
 		// Test other non-useful cases of getEffectiveLightableLocation
 		Location effectiveLoc3 = WiFactory.getEffectiveLightableLocation(bay77_1);
 		Assert.assertEquals(bay77_1, effectiveLoc3);
 		LOGGER.info("Test is genererating this [ERROR]. No problem");
-		Assert.assertNull( WiFactory.getEffectiveLightableLocation(null));
-		
+		Assert.assertNull(WiFactory.getEffectiveLightableLocation(null));
+
 		// Change the values. Just testing the persistence
 		bay77_1.setIndicatorLedValuesInteger(5, 7);
 		commitTransaction();

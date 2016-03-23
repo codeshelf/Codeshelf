@@ -20,10 +20,15 @@ import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 
-public class PropertyBehavior{
-	private static final Logger			LOGGER				= LoggerFactory.getLogger(PropertyBehavior.class);
+public class PropertyBehavior {
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(PropertyBehavior.class);
 	
-	public static String getProperty(Facility facility, FacilityPropertyType type){
+	// Start to expose these values to avoid duplication of strings and bugs from that
+	public static String PROPERTY_DISABLED = "Disabled";
+	public static String INDICATOR_PROPERTY_ALLJOBS = "All_jobs";
+
+
+	public static String getProperty(Facility facility, FacilityPropertyType type) {
 		FacilityProperty property = retrieveProperty(facility, type);
 		if (property == null) {
 			return type.getDefaultValue();
@@ -31,7 +36,7 @@ public class PropertyBehavior{
 			return property.getValue();
 		}
 	}
-	
+
 	public static boolean getPropertyAsBoolean(Facility inFacility, FacilityPropertyType type) {
 		String property = getProperty(inFacility, type);
 		return Boolean.parseBoolean(property);
@@ -49,7 +54,7 @@ public class PropertyBehavior{
 		String property = getProperty(facility, type);
 		return Integer.parseInt(property);
 	}
-	
+
 	public static void setProperty(Facility facility, FacilityPropertyType type, String value) {
 		// The UI may have passed a string that is close enough. But we want to force it to our canonical forms.
 		String canonicalForm = toCanonicalForm(type, value);
@@ -69,13 +74,13 @@ public class PropertyBehavior{
 			property = new FacilityProperty(facility, type);
 		}
 		property.setValue(canonicalForm);
-		FacilityProperty.staticGetDao().store(property);			
+		FacilityProperty.staticGetDao().store(property);
 	}
-		
-	public static List<FacilityProperty> getAllProperties(Facility facility){
+
+	public static List<FacilityProperty> getAllProperties(Facility facility) {
 		List<FacilityProperty> properties = new ArrayList<>();
 		FacilityProperty property = null;
-		for (FacilityPropertyType type : FacilityPropertyType.values()){
+		for (FacilityPropertyType type : FacilityPropertyType.values()) {
 			property = retrieveProperty(facility, type);
 			if (property == null) {
 				property = new FacilityProperty(facility, type);
@@ -85,7 +90,7 @@ public class PropertyBehavior{
 		}
 		return properties;
 	}
-	
+
 	public static void restoreHKDefaults(Facility inFacility) {
 		setRepeatPosChoice(inFacility, RepeatPosChoice.RepeatPosContainerOnly);
 		setBayChangeChoice(inFacility, BayChangeChoice.BayChangeBayChange);
@@ -95,8 +100,8 @@ public class PropertyBehavior{
 		setRepeatPosChoice(facility, RepeatPosChoice.RepeatPosNone);
 		setBayChangeChoice(facility, BayChangeChoice.BayChangeNone);
 	}
-	
-	private static FacilityProperty retrieveProperty(Facility facility, FacilityPropertyType type){
+
+	private static FacilityProperty retrieveProperty(Facility facility, FacilityPropertyType type) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", facility));
 		filterParams.add(Restrictions.eq("name", type.name()));
@@ -109,7 +114,7 @@ public class PropertyBehavior{
 	}
 
 	private static void setBayChangeChoice(Facility facility, BayChangeChoice inBayChangeChoice) {
-		switch(inBayChangeChoice){
+		switch (inBayChangeChoice) {
 			case BayChangeNone:
 				setProperty(facility, FacilityPropertyType.BAYCHANG, "None");
 				break;
@@ -126,9 +131,9 @@ public class PropertyBehavior{
 				LOGGER.error("unknown value in setBayChangeChoice");
 		}
 	}
-	
+
 	private static void setRepeatPosChoice(Facility facility, RepeatPosChoice inRepeatPosChoice) {
-		switch(inRepeatPosChoice){
+		switch (inRepeatPosChoice) {
 			case RepeatPosNone:
 				setProperty(facility, FacilityPropertyType.RPEATPOS, "None");
 				break;
@@ -154,7 +159,7 @@ public class PropertyBehavior{
 		if (trimmedValue.isEmpty())
 			return null;
 		// Find out which one we are
-		switch (type){
+		switch (type) {
 			case BAYCHANG:
 				return validate_baychang(trimmedValue);
 			case RPEATPOS:
@@ -193,20 +198,32 @@ public class PropertyBehavior{
 				return validate_ordersub(trimmedValue);
 			case TIMEZONE:
 				return validate_timezone(trimmedValue);
+			case INDICATOR:
+				return validate_indicator(trimmedValue);
 			default:
 				LOGGER.error("new DomainObjectProperty: " + type.name() + " has no toCanonicalForm implementation");
 		}
 		return null;
 	}
-	
+
+	private static String validate_indicator(String inValue) {
+		// valid values are "Disabled, All_jobs"
+
+		if (inValue.equalsIgnoreCase(PROPERTY_DISABLED))
+			return PROPERTY_DISABLED;
+		else if (inValue.equalsIgnoreCase(INDICATOR_PROPERTY_ALLJOBS))
+			return INDICATOR_PROPERTY_ALLJOBS;
+		else
+			return null;
+	}
+
 	private static String validate_scantype(String inValue) {
 		// valid values are "Disabled, SKU, UPC"
-		final String disabled = "Disabled";
 		final String sku = "SKU";
 		final String upc = "UPC";
-		
-		if (inValue.equalsIgnoreCase(disabled))
-			return disabled;
+
+		if (inValue.equalsIgnoreCase(PROPERTY_DISABLED))
+			return PROPERTY_DISABLED;
 		else if (inValue.equalsIgnoreCase(sku))
 			return sku;
 		else if (inValue.equalsIgnoreCase(upc))
@@ -325,7 +342,7 @@ public class PropertyBehavior{
 			}
 		}
 	}
-	
+
 	private static String validate_ordersub(String inValue) {
 		String defaultORDERSUB = FacilityPropertyType.ORDERSUB.getDefaultValue();
 		if (defaultORDERSUB.equalsIgnoreCase(inValue)) {
@@ -337,8 +354,8 @@ public class PropertyBehavior{
 		}
 		try {
 			int start = Integer.parseInt(parts[0].trim());
-			int end   = Integer.parseInt(parts[1].trim());
-			if (start == 0 || end == 0){
+			int end = Integer.parseInt(parts[1].trim());
+			if (start == 0 || end == 0) {
 				return null;
 			}
 			if (start <= end) {
@@ -348,18 +365,18 @@ public class PropertyBehavior{
 		}
 		return null;
 	}
-	
+
 	private static String validate_protocol(String inValue) {
-		if ("0".equals(inValue) || "1".equals(inValue)){
+		if ("0".equals(inValue) || "1".equals(inValue)) {
 			return inValue;
 		}
 		return null;
 	}
-	
+
 	private static String validate_timezone(String inValue) {
 		String validIds[] = TimeZone.getAvailableIDs();
 		for (String validId : validIds) {
-			if (validId.equalsIgnoreCase(inValue)){
+			if (validId.equalsIgnoreCase(inValue)) {
 				return inValue;
 			}
 		}

@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.LightBehavior;
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.LedSample;
@@ -568,6 +569,7 @@ public class WiFactory {
 	/**
 	 * Originally set to 4.
 	 * For Walmart palletizer, we want to allow most of a 105 cm light tube
+	 * Note: may need to modify this as the new "function" in aisle file may set to different numbers.
 	 * 
 	 */
 	private static int getMaxLedsToLight(Location inLocation, int inPosNumTotal) {
@@ -578,6 +580,25 @@ public class WiFactory {
 			returnValue = inPosNumTotal;
 
 		return returnValue;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * May return null. Skips over lightable tier and returns only bay or aisl.
+	 */
+	private static Location getLightableParent(Location inLocation) {
+		Location parent = inLocation.getParent();
+		while (parent != null) {
+			Short testLed = parent.getFirstLedNumAlongPath();
+			if (testLed != null && testLed > 0) {
+				// For now, a slot will skip over a defined tier. Not sure that is right, but matches initial requirements.
+				if (parent != null && (parent instanceof Bay || parent instanceof Aisle)) {
+					return parent;
+				}
+			}
+			parent = parent.getParent();
+		}
+		return null;
 	}
 
 	/**
@@ -595,17 +616,13 @@ public class WiFactory {
 		if (firstLed != null && firstLed > 0) {
 			return inLocation;
 		} else {
-			// go up the parent chain			
-			Location parent = inLocation.getParent();
-			while (parent != null) {
-				Short testLed = parent.getFirstLedNumAlongPath();
-				if (testLed != null && testLed > 0) {
-					// For now, a slot will skip over a defined tier. Not sure that is right, but matches initial requirements.
-					if (parent != null && (parent instanceof Bay || parent instanceof Aisle)) {
-						return parent;
-					}
-				}
-				parent = parent.getParent();
+			// go up the parent chain, but only if configured to do so.	
+			// This may be a performance problem. WIFactory is static, so must check on each call.  May need an efficient facility cache.
+			String indicatorConfig = PropertyBehavior.getProperty(inLocation.getFacility(), FacilityPropertyType.INDICATOR);
+			if (indicatorConfig.equals(PropertyBehavior.INDICATOR_PROPERTY_ALLJOBS)) {
+				Location lightableParent = getLightableParent(inLocation);
+				if (lightableParent != null)
+					return lightableParent;
 			}
 		}
 		return inLocation;
