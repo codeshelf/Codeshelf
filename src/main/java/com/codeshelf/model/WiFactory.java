@@ -21,6 +21,8 @@ import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.dao.DaoException;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.Facility;
@@ -60,7 +62,8 @@ public class WiFactory {
 		WiPurposePalletizerPut("Put Palletizer");
 
 		@Getter
-		private String displayName;
+		private String	displayName;
+
 		private WiPurpose(String displayName) {
 			this.displayName = displayName;
 		}
@@ -143,9 +146,19 @@ public class WiFactory {
 		Container inContainer,
 		Location inLocation) throws DaoException {
 		Location unspecifiedLocation = inLocation.getFacility().getUnspecifiedLocation();
-		return createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, inContainer, inLocation, true, unspecifiedLocation, null);
+		return createWorkInstruction(inStatus,
+			inType,
+			purpose,
+			inOrderDetail,
+			inChe,
+			inTime,
+			inContainer,
+			inLocation,
+			true,
+			unspecifiedLocation,
+			null);
 	}
-	
+
 	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
 		WorkInstructionTypeEnum inType,
 		WiPurpose purpose,
@@ -157,8 +170,15 @@ public class WiFactory {
 		boolean linkInstructionToDetail,
 		Location unspecifiedLocation,
 		ColorEnum colorOverride) throws DaoException {
-		
-		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, linkInstructionToDetail, unspecifiedLocation);
+
+		WorkInstruction resultWi = createWorkInstruction(inStatus,
+			inType,
+			purpose,
+			inOrderDetail,
+			inChe,
+			inTime,
+			linkInstructionToDetail,
+			unspecifiedLocation);
 		if (resultWi == null) { //no more work to do
 			return null;
 		}
@@ -250,15 +270,22 @@ public class WiFactory {
 			if (wi.getType().equals(WorkInstructionTypeEnum.PLAN)) {
 				resultWi = wi;
 				if (!wi.getFacility().equals(facility)) {
-					LOGGER.error("Strange: Work instruction {} in OrderDetail {}  does not belong to Facility {} (continuing" , 
-							resultWi.getPersistentId(), inOrderDetail.getDomainId(), facility.getDomainId() );
-				}
-				else {
+					LOGGER.error("Strange: Work instruction {} in OrderDetail {}  does not belong to Facility {} (continuing",
+						resultWi.getPersistentId(),
+						inOrderDetail.getDomainId(),
+						facility.getDomainId());
+				} else {
 					// This seems to happen only when order was set up on one cart, then set up later on another cart.
 					if (inChe != null)
-						LOGGER.info("Recycle existing PLAN wi for {} from OrderDetail:{}.  New che: {}/{}", wi.getItemId(), inOrderDetail.getDomainId(), inChe.getDomainId(), inChe.getDeviceGuidStrNoPrefix());
-					else 
-						LOGGER.info("Recycle existing PLAN wi for {} from OrderDetail:{}", wi.getItemId(), inOrderDetail.getDomainId());
+						LOGGER.info("Recycle existing PLAN wi for {} from OrderDetail:{}.  New che: {}/{}",
+							wi.getItemId(),
+							inOrderDetail.getDomainId(),
+							inChe.getDomainId(),
+							inChe.getDeviceGuidStrNoPrefix());
+					else
+						LOGGER.info("Recycle existing PLAN wi for {} from OrderDetail:{}",
+							wi.getItemId(),
+							inOrderDetail.getDomainId());
 					// If you chase the code through, you will see that although the wi itself is recycled, every field is redone as if it were new.
 				}
 				break;
@@ -305,14 +332,14 @@ public class WiFactory {
 			resultWi.setAssigned(inTime);
 			resultWi.setPurpose(purpose);
 			resultWi.setSubstituteAllowed(inOrderDetail.getSubstituteAllowed());
-			
+
 			// set gtin field on work instruction based on order detail
 			resultWi.setGtin(null);
 			if (inOrderDetail != null) {
 				resultWi.setGtin(inOrderDetail.getGtinId());
 				// set needs scan field based on order detail
 				resultWi.setNeedsScan(inOrderDetail.getNeedsScan());
-			}			
+			}
 			// DEV-592 comments. Usually resultWi is newly made, but if setting up the CHE again, or another CHE, it may be the same old WI.
 			// If the same old one, already the orderDetail and facility relationship is correct. The CHE might be correct, or not if now going to a different one.
 			// Important: 	inChe.addWorkInstruction(resultWi) will fail if the wi is currently on another CHE.
@@ -346,7 +373,7 @@ public class WiFactory {
 		}
 		return resultWi;
 	}
-	
+
 	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum status,
 		WorkInstructionTypeEnum type,
 		Item item,
@@ -358,7 +385,7 @@ public class WiFactory {
 		Location location = item.getStoredLocation();
 		String locationId = location.getFullDomainId();
 		String pickInstruction = location.getBestUsableLocationName();
-		
+
 		WorkInstruction wi = new WorkInstruction();
 		wi.setCreated(new Timestamp(System.currentTimeMillis()));
 		wi.setStatus(status);
@@ -373,7 +400,7 @@ public class WiFactory {
 		wi.setDescription(cookedDesc);
 		wi.setPlanQuantity(1);
 		wi.setPlanMinQuantity(1);
-		wi.setPlanMaxQuantity(fixedQuantity?1:99);
+		wi.setPlanMaxQuantity(fixedQuantity ? 1 : 99);
 		wi.setActualQuantity(0);
 		wi.setAssigned(time);
 		Gtin gtin = item.getGtin();
@@ -383,21 +410,21 @@ public class WiFactory {
 		wi.setLocation(location);
 		wi.setLocationId(locationId);
 		wi.doSetPickInstruction(pickInstruction);
-		
+
 		setPosConInstructions(wi, item.getStoredLocation());
-		
+
 		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemOrLocation(item, che.getColor(), item.getStoredLocation());
-		if (ledCmdGroupList.size() > 0){
+		if (ledCmdGroupList.size() > 0) {
 			wi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 		}
 		if (wi.getLedCmdStream() == null) {
 			wi.setLedCmdStream("[]");
 		}
-		
+
 		WorkInstruction.staticGetDao().store(wi);
 		return wi;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inWi
@@ -489,7 +516,7 @@ public class WiFactory {
 		// We expect to find an inventory item at the location. Be sure to get item and set posAlongPath always, before bailing out on the led command.
 		Double posAlongPath = null;
 		Item theItem = inLocation.getStoredItemFromMasterIdAndUom(inItemMasterId, inUomId);
-		if (theItem == null) {			
+		if (theItem == null) {
 			// If picking by inventory item, use the item's position along path. Normally, the location's.
 			posAlongPath = inLocation.getPosAlongPath();
 		} else {
@@ -536,22 +563,45 @@ public class WiFactory {
 		Location location = inItem.getStoredLocation();
 		return getLedCmdGroupListForItemOrLocation(inItem, inColor, location);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Originally set to 4.
 	 * For Walmart palletizer, we want to allow most of a 105 cm light tube
 	 * 
 	 */
-	private static int getMaxLedsToLight(Location inLocation, int inPosNumTotal){
+	private static int getMaxLedsToLight(Location inLocation, int inPosNumTotal) {
 		int returnValue = maxLedsToLight;
-		boolean looksLikeFullPalletSituation = (inLocation != null) && inLocation.isSlot() && (inPosNumTotal < 31 && inPosNumTotal > 25);
+		boolean looksLikeFullPalletSituation = (inLocation != null) && inLocation.isSlot()
+				&& (inPosNumTotal < 31 && inPosNumTotal > 25);
 		if (looksLikeFullPalletSituation)
 			returnValue = inPosNumTotal;
-		
+
 		return returnValue;
 	}
-	
+
+	/**
+	 * Normally returns the same location as passed in, even if not lightable.
+	 * May return the bay or aisle parent if this location does not have LEDs defined and the parent does.
+	 * This will not return null, unless the input was null, which would be an error.
+	 * This is recursive.
+	 */
+	//public for sake of a test
+	public static Location getEffectiveLightableLocation(Location inLocation) {
+		if (inLocation == null) {
+			LOGGER.error("null input to getEffectiveLightableLocation");
+			return inLocation;
+		}
+		Location returnLoc = inLocation;
+		Short firstLed = inLocation.getFirstLedNumAlongPath();
+		if (firstLed == null || firstLed == 0) {
+			Location parent = inLocation.getParent();
+			if (parent != null && (parent instanceof Bay || parent instanceof Aisle))
+				returnLoc = getEffectiveLightableLocation(returnLoc);
+		}
+		return returnLoc;
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Utility function to create LED command group. Will return a list, which may be empty if there is nothing to send. Caller should check for empty list.
@@ -567,7 +617,11 @@ public class WiFactory {
 		short lastLedPosNum = 0;
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
 
-		if (inLocation != null && !inLocation.isLightableAisleController()) {
+		if (inLocation != null && !inLocation.isLedconConfigured()) {
+			return ledCmdGroupList;
+		}
+		Location effectiveLoc = getEffectiveLightableLocation(inLocation);
+		if (!effectiveLoc.isLightableAisleController()) {
 			return ledCmdGroupList;
 		}
 
@@ -576,16 +630,18 @@ public class WiFactory {
 			LedRange theRange = inItem.getFirstLastLedsForItem();
 			firstLedPosNum = theRange.getFirstLedToLight();
 			lastLedPosNum = theRange.getLastLedToLight();
-		} else if (inLocation != null) { // null item. Just get the location values.
-			LedRange theRange = inLocation.getFirstLastLedsForLocation();
+		} else if (effectiveLoc != null) { // null item. Just get the location values.
+			LedRange theRange = effectiveLoc.getFirstLastLedsForLocation();
 			firstLedPosNum = theRange.getFirstLedToLight();
 			lastLedPosNum = theRange.getLastLedToLight();
-		} else {
+		}
+		/* dead code now
+		else {
 			LOGGER.error("getLedCmdGroupListForItemOrLocation  no item nor location");
 			return ledCmdGroupList;
-		}
+		}*/
 
-		LedController theLedController = inLocation.getEffectiveLedController();
+		LedController theLedController = effectiveLoc.getEffectiveLedController();
 		if (theLedController == null) {
 			LOGGER.error("getLedCmdGroupListForItemOrLocation");
 			return ledCmdGroupList;
@@ -598,10 +654,10 @@ public class WiFactory {
 
 		// This is how we send LED data to the remote controller. In this case, only one led sample range.
 		List<LedSample> ledSamples = new ArrayList<LedSample>();
-		LedCmdGroup ledCmdGroup = new LedCmdGroup(netGuidStr, inLocation.getEffectiveLedChannel(), firstLedPosNum, ledSamples);
+		LedCmdGroup ledCmdGroup = new LedCmdGroup(netGuidStr, effectiveLoc.getEffectiveLedChannel(), firstLedPosNum, ledSamples);
 
 		int countUsed = 0;
-		int maxToLight = getMaxLedsToLight(inLocation, lastLedPosNum - firstLedPosNum + 1);
+		int maxToLight = getMaxLedsToLight(effectiveLoc, lastLedPosNum - firstLedPosNum + 1);
 		for (short ledPos = firstLedPosNum; ledPos <= lastLedPosNum; ledPos++) {
 			LedSample ledSample = new LedSample(ledPos, inColor);
 			ledSamples.add(ledSample);

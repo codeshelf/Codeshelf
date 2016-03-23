@@ -1211,13 +1211,21 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	@JsonIgnore
-	public boolean isLightableAisleController() {
+	public boolean isLedconConfigured() {
 		LedController controller = this.getEffectiveLedController();
 		Short controllerChannel = this.getEffectiveLedChannel();
 		if (controller == null || controllerChannel == null) {
 			return false;
 		}
 		if (!DeviceType.Lights.equals(controller.getDeviceType())) {
+			return false;
+		}
+		return true;
+	}
+
+	@JsonIgnore
+	public boolean isLightableAisleController() {
+		if (!isLedconConfigured()) {
 			return false;
 		}
 		Short firstLocLed = getFirstLedNumAlongPath();
@@ -1677,21 +1685,21 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			locName = getNominalLocationIdExcludeBracket();
 		return locName;
 	}
-	
+
 	/**
 	 *  Used to set indicators. Known use cases for bay or aisle. Tier is conceivable. Slot probably not, although
 	 *  this could be used to just for a slot. Also see Tier.setSlotTierLEDs() for somewhat generic way to set slots for a tier.
 	 *  Note: this does not set lowerLedNearAnchor, which should not be relevant for the indicator situation.
 	 *  This must be in a transaction.
 	 */
-	public void setIndicatorLedValues(Short firstLedValue, Short secondLedValue){
+	public void setIndicatorLedValues(Short firstLedValue, Short secondLedValue) {
 		// both null or both not null
-		if ((firstLedValue == null) != (secondLedValue == null)){
+		if ((firstLedValue == null) != (secondLedValue == null)) {
 			LOGGER.error("Bad values in setIndicatorLedValues. One null and other not.");
 			return;
 		}
 		// second may be equal to first, but not less
-		if ((firstLedValue != null) && (secondLedValue < firstLedValue)){
+		if ((firstLedValue != null) && (secondLedValue < firstLedValue)) {
 			LOGGER.error("Bad values in setIndicatorLedValues. Second may not be less than first");
 			return;
 		}
@@ -1699,13 +1707,13 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		this.setLastLedNumAlongPath(secondLedValue);
 		this.getDao().store(this);
 	}
-	
+
 	/**
 	 * Convenience API
 	 */
-	public void setIndicatorLedValuesInteger(int firstLedValue, int secondLedValue){
+	public void setIndicatorLedValuesInteger(int firstLedValue, int secondLedValue) {
 		// these cannot be null. May cast
-		setIndicatorLedValues((short)firstLedValue, (short)secondLedValue);
+		setIndicatorLedValues((short) firstLedValue, (short) secondLedValue);
 	}
 
 }
