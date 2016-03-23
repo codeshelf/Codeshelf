@@ -584,7 +584,6 @@ public class WiFactory {
 	 * Normally returns the same location as passed in, even if not lightable.
 	 * May return the bay or aisle parent if this location does not have LEDs defined and the parent does.
 	 * This will not return null, unless the input was null, which would be an error.
-	 * This is recursive.
 	 */
 	//public for sake of a test
 	public static Location getEffectiveLightableLocation(Location inLocation) {
@@ -592,14 +591,24 @@ public class WiFactory {
 			LOGGER.error("null input to getEffectiveLightableLocation");
 			return inLocation;
 		}
-		Location returnLoc = inLocation;
 		Short firstLed = inLocation.getFirstLedNumAlongPath();
-		if (firstLed == null || firstLed == 0) {
+		if (firstLed != null && firstLed > 0) {
+			return inLocation;
+		} else {
+			// go up the parent chain			
 			Location parent = inLocation.getParent();
-			if (parent != null && (parent instanceof Bay || parent instanceof Aisle))
-				returnLoc = getEffectiveLightableLocation(returnLoc);
+			while (parent != null) {
+				Short testLed = parent.getFirstLedNumAlongPath();
+				if (testLed != null && testLed > 0) {
+					// For now, a slot will skip over a defined tier. Not sure that is right, but matches initial requirements.
+					if (parent != null && (parent instanceof Bay || parent instanceof Aisle)) {
+						return parent;
+					}
+				}
+				parent = parent.getParent();
+			}
 		}
-		return returnLoc;
+		return inLocation;
 	}
 
 	// --------------------------------------------------------------------------

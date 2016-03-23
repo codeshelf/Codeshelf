@@ -19,6 +19,7 @@ import com.codeshelf.flyweight.command.NetGuid;
 // domain objects needed
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.TravelDirectionEnum;
+import com.codeshelf.model.WiFactory;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -3322,12 +3323,27 @@ public class AisleImporterTest extends MockDaoTest {
 		beginTransaction();
 		facility = facility.reload();
 
-		// The function call set this
+		// The function call in the aisles file set this
 		assertLeds(facility, "A77.B1", 4, 6);
-
-		// 
 		Bay bay77_1 = (Bay) facility.findSubLocationById("A77.B1");
 		Assert.assertNotNull(bay77_1);
+		
+		// Tests of WiFactory.getEffectiveLightableLocation(). This is what is used to find the indicator light
+		// This work from DEV-1529. See that getEffectiveLightableLocation() does not check if controller/channel not set.
+		Location slot = facility.findSubLocationById("A77.B1.T1.S1");
+		Location tier = facility.findSubLocationById("A77.B1.T1");
+		Location effectiveLoc = WiFactory.getEffectiveLightableLocation(slot);
+		Assert.assertEquals(bay77_1, effectiveLoc);
+		Location effectiveLoc2 = WiFactory.getEffectiveLightableLocation(tier);
+		Assert.assertEquals(bay77_1, effectiveLoc2);
+		
+		// Test other non-useful cases of getEffectiveLightableLocation
+		Location effectiveLoc3 = WiFactory.getEffectiveLightableLocation(bay77_1);
+		Assert.assertEquals(bay77_1, effectiveLoc3);
+		LOGGER.info("Test is genererating this [ERROR]. No problem");
+		Assert.assertNull( WiFactory.getEffectiveLightableLocation(null));
+		
+		// Change the values. Just testing the persistence
 		bay77_1.setIndicatorLedValuesInteger(5, 7);
 		commitTransaction();
 
