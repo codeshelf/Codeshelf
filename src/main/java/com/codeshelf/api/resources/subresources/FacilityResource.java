@@ -81,7 +81,7 @@ import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvWorkerImporter;
 import com.codeshelf.manager.User;
-import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
+import com.codeshelf.metrics.SiteControllerHealthCheck;
 import com.codeshelf.metrics.FacilityHealthCheckResult;
 import com.codeshelf.model.DataPurgeParameters;
 import com.codeshelf.model.ReplenishItem;
@@ -91,6 +91,7 @@ import com.codeshelf.model.dao.ResultDisplay;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FacilityMetric;
+import com.codeshelf.model.domain.SiteController.SiteControllerRole;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
@@ -704,7 +705,7 @@ public class FacilityResource {
 		try {
 			persistence.beginTransaction();
 			facility = facility.reload();
-			FacilityHealthCheckResult result = new ActiveSiteControllerHealthCheck(webSocketManagerService).checkResult(facility);
+			FacilityHealthCheckResult result = SiteControllerHealthCheck.checkResult(facility, SiteControllerRole.NETWORK_PRIMARY);
 			if (!result.isHealthy()) {
 				errorMesage.setMessageError("Site controller problem: " + result.getMessage());
 				return errorMesage;

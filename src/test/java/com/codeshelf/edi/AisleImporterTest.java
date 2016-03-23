@@ -34,7 +34,6 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.Vertex;
-import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.testframework.ServerTest;
 
 /**

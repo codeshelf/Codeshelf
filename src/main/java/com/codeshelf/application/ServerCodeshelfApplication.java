@@ -91,6 +91,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		metricsService.registerHealthCheck(new CachedEdiHealthCheck());
 		metricsService.registerHealthCheck(new CachedEdiSizeCheck());
 		metricsService.registerHealthCheck(new CachedActiveSiteControllerHealthCheck());
+		metricsService.registerHealthCheck(new CachedStandbySiteControllerHealthCheck());
 		metricsService.registerHealthCheck(new CachedDatabaseConnectionHealthCheck());
 		metricsService.registerHealthCheck(new CachedDataQuantityHealthCheck());
 		metricsService.registerHealthCheck(new CachedDropboxGatewayHealthCheck());

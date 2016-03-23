@@ -8,7 +8,8 @@ import org.quartz.Job;
 import org.quartz.JobKey;
 
 import com.codeshelf.application.FacilitySchedulerService.NotImplementedJob;
-import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
+import com.codeshelf.metrics.SiteControllerHealthCheck.ActiveSiteControllerHealthCheck;
+import com.codeshelf.metrics.SiteControllerHealthCheck.StandbySiteControllerHealthCheck;
 import com.codeshelf.metrics.DataQuantityHealthCheck;
 import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.codeshelf.metrics.DropboxGatewayHealthCheck;
@@ -39,6 +40,12 @@ public enum ScheduledJobType {
 			ScheduledJobCategory.METRIC),
 	CheckActiveSiteControllerHealth(ActiveSiteControllerHealthCheck.class,
 			"Check Active Site Controllers.",
+			"0 */2 * * * ?",
+			true,
+			true,
+			ScheduledJobCategory.CHECK),
+	CheckStandbySiteControllerHealth(StandbySiteControllerHealthCheck.class,
+			"Check Standby Site Controllers.",
 			"0 */2 * * * ?",
 			true,
 			true,
