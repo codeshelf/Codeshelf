@@ -41,7 +41,7 @@ public class CachedHealthCheck extends CodeshelfHealthCheck {
 
 	public static class CachedStandbySiteControllerHealthCheck extends CachedHealthCheck{
 		public CachedStandbySiteControllerHealthCheck() {
-			super("Seconda Standby Controllers", StandbySiteControllerHealthCheck.class.getSimpleName());
+			super("Standby Site Controllers", StandbySiteControllerHealthCheck.class.getSimpleName());
 		}
 	}
 
