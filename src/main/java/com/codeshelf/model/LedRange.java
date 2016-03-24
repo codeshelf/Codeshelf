@@ -37,7 +37,8 @@ public class LedRange {
 		int inLastLocLed,
 		boolean inFirstLedNearAnchor,
 		Double inLocWidth,
-		Double inMetersFromAnchor, boolean inIsSlot) {
+		Double inMetersFromAnchor,
+		boolean inIsSlot) {
 		if (inLocWidth == null)
 			inLocWidth = 0.0;
 		if (inMetersFromAnchor == null)
@@ -45,7 +46,10 @@ public class LedRange {
 		return _computeLedsToLight(inFirstLocLed, inLastLocLed, inFirstLedNearAnchor, inLocWidth, inMetersFromAnchor, inIsSlot);
 	}
 
-	public static LedRange computeLedsToLightForLocationNoOffset(int inFirstLocLed, int inLastLocLed, boolean inFirstLedNearAnchor, boolean inIsSlot) {
+	public static LedRange computeLedsToLightForLocationNoOffset(int inFirstLocLed,
+		int inLastLocLed,
+		boolean inFirstLedNearAnchor,
+		boolean inIsSlot) {
 		return _computeLedsToLight(inFirstLocLed, inLastLocLed, inFirstLedNearAnchor, 0.0, 0.0, inIsSlot);
 	}
 
@@ -103,11 +107,17 @@ public class LedRange {
 		return (mFirstLedToLight <= ledPosition && ledPosition <= mLastLedToLight);
 	}
 
+	/**
+	 * If unconstrained just make the range with the first and last as specified.
+	 * The more interesting case is the constrained (tier) case for unslotted inventory where we should find the four LEDs centered at the item
+	 * using the other paraameters.
+	 */
 	private static LedRange _computeLedsToLight(int inFirstLocationLed,
 		int inLastLocationLed,
 		boolean inFirstLedNearAnchor,
 		double inLocationWidth,
-		double inMetersFromAnchor, boolean inIsSlot) {
+		double inMetersFromAnchor,
+		boolean unconstrained) {
 		// Note mLocationWidth = 0 may be commonly used by computeLedsToLightForLocationNoOffset. There is a width, but does not matter to the computation. So passed as 0.
 		if (inFirstLocationLed <= 0 || inLastLocationLed <= 0) {
 			// log?
@@ -120,12 +130,10 @@ public class LedRange {
 
 		if (inMetersFromAnchor < 0.0 || inLocationWidth < 0.0) {
 			LOGGER.error("unexpected width or metersFromAnchor in _computeLedsToLight");
-			;
 			return zero();
 		}
 		if (inMetersFromAnchor > inLocationWidth) {
 			LOGGER.error("metersFromAnchor larger than width in _computeLedsToLight");
-			;
 			return zero();
 		}
 
@@ -142,7 +150,7 @@ public class LedRange {
 		int ledSpan = inLastLocationLed - inFirstLocationLed + 1;
 
 		// if slotted, let a large LED range ride. This is the Walmart Palletizer situation
-		if (uninitializedCmFromLeft && (inIsSlot || ledSpan <= 5 ) ) { //slotted
+		if (uninitializedCmFromLeft && (unconstrained || ledSpan <= 5)) { //slotted
 			return new LedRange(inFirstLocationLed, inLastLocationLed);
 		} else { // non-slotted: do the calculation
 			if (!inFirstLedNearAnchor) {

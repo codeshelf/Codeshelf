@@ -1255,10 +1255,15 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		boolean lowerLedNearAnchor = this.isLowerLedNearAnchor();
 
+		// this fourth parameter is funny. Some cases may have led ranges that should not be constrained to only 4 LEDs.
+		// Slot: palletizer case. Up to 32 LEDs.
+		// Aisle or Bay: Indicator light. Up to 20 LEDs.
+		// Tier: usually should constrain to 4, lighting items for non-slotted.
 		LedRange theLedRange = LedRange.computeLedsToLightForLocationNoOffset(firstLocLed,
 			lastLocLed,
 			lowerLedNearAnchor,
-			this.isSlot());
+			/*this.isSlot());*/
+			!this.isTier());
 
 		return theLedRange;
 	}
