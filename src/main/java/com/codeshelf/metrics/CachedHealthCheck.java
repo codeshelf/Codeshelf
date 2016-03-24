@@ -1,5 +1,7 @@
 package com.codeshelf.metrics;
 
+import com.codeshelf.metrics.SiteControllerHealthCheck.ActiveSiteControllerHealthCheck;
+import com.codeshelf.metrics.SiteControllerHealthCheck.StandbySiteControllerHealthCheck;
 import com.codeshelf.scheduler.CachedHealthCheckResults;
 
 public class CachedHealthCheck extends CodeshelfHealthCheck {
@@ -36,7 +38,13 @@ public class CachedHealthCheck extends CodeshelfHealthCheck {
 			super("Active Site Controllers", ActiveSiteControllerHealthCheck.class.getSimpleName());
 		}
 	}
-	
+
+	public static class CachedStandbySiteControllerHealthCheck extends CachedHealthCheck{
+		public CachedStandbySiteControllerHealthCheck() {
+			super("Standby Site Controllers", StandbySiteControllerHealthCheck.class.getSimpleName());
+		}
+	}
+
 	public static class CachedDataQuantityHealthCheck extends CachedHealthCheck{
 		public CachedDataQuantityHealthCheck() {
 			super("DataQuantity", DataQuantityHealthCheck.class.getSimpleName());

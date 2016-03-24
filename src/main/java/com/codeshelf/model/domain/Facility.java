@@ -1194,6 +1194,14 @@ public class Facility extends Location {
 		}
 		return users;
 	}
+	
+	public Set<SiteController> getSiteControllers() {
+		Set<SiteController> siteControllers = new HashSet<SiteController>();
+		for (CodeshelfNetwork network : networks.values()) {
+			siteControllers.addAll(network.getSiteControllers().values());
+		}
+		return siteControllers;
+	}
 
 	public Aisle createAisle(String inAisleId, Point inAnchorPoint, Point inPickFaceEndPoint) {
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(this, inAisleId);
