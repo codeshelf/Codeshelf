@@ -48,10 +48,14 @@ public class LightBehavior implements IApiBehavior {
 	private final static ColorEnum	defaultColor				= ColorEnum.RED;
 	private final static int		defaultLightDurationSeconds	= 20;
 
-	// Originally 4 leds. The aisle file read and UI indicates 4 leds.  Was changed to 3 leds before aisle controller message splitting to allow more simultaneous lighting.
-	// Should not longer be necessary. Between v6 and v10 there was some inconsistency between 3 and 4. Now consistent.  Ideally no configuration parameter for this because if set
-	// otherwise, the UI still show 4. See DEV-411
-	private final static int		defaultLedsToLight			= 4;											// IMPORTANT. This should be synched with WIFactory.maxLedsToLight
+	// Originally 4 leds.
+	private final static int		defaultLedsToLight			= 4;
+
+	// IMPORTANT. maxNormalLedsToLight should be synched with LightBehavior.defaultLedsToLight
+	private static final int		maxNormalLedsToLight		= 4;
+	private static final int		maxMaxLedsToLight			= 20;											// Let hard configuration go up to 20.
+
+	// There may be other business cases similar to palletizer that want even more.
 
 	@Inject
 	public LightBehavior() {
@@ -98,9 +102,7 @@ public class LightBehavior implements IApiBehavior {
 		getInstructionsForPosConRange(facility, null, locations, instructions, affectedControllers);
 		PosControllerInstrList posMessage = new PosControllerInstrList(instructions);
 		sendMessage(facility.getSiteControllerUsers(), posMessage);
-		int lightDuration = PropertyBehavior.getPropertyAsInt(facility,
-			FacilityPropertyType.LIGHTSEC,
-			defaultLightDurationSeconds);
+		int lightDuration = PropertyBehavior.getPropertyAsInt(facility, FacilityPropertyType.LIGHTSEC, defaultLightDurationSeconds);
 		//Extinguish all PosCons in affected controllers after some time. This will not affect displayed instructions send from other devices (such as CHEs)
 		new Timer().schedule(new TimerTask() {
 			@Override
@@ -344,17 +346,23 @@ public class LightBehavior implements IApiBehavior {
 	}
 
 	// --------------------------------------------------------------------------
-
+	/**
+	 * lights the locations passed in if they will directly light. More commonly, the location will not light directly--
+	 * calls to light the lightable children
+	 */
 	void lightChildLocations(final Facility facility, final List<Location> locations, ColorEnum color) {
 		List<Location> leaves = Lists.newArrayList();
 		//Do not light slots when lighting an aisle
 		for (Location location : locations) {
-			getAllLedLightableLeaves(location, leaves, !location.isAisle());
+			// DEV-1529. If this location is directly lightable, just add it to leaves list.
+			if (location.isLightableAisleController() && (location.isBay() || location.isAisle())) {
+				leaves.add(location);
+			} else {
+				// otherwise, call to add lightable children to leaves.
+				getAllLedLightableLeaves(location, leaves, !location.isAisle());
+			}
 		}
-		List<LightLedsInstruction> instructions = getLightInstructionsForMultipleLocations(facility,
-			defaultLedsToLight,
-			color,
-			leaves);
+		List<LightLedsInstruction> instructions = getLightInstructionsForMultipleLocations(facility, color, leaves);
 		LedInstrListMessage message = new LedInstrListMessage(instructions);
 		sendMessage(facility.getSiteControllerUsers(), message);
 	}
@@ -406,12 +414,46 @@ public class LightBehavior implements IApiBehavior {
 		List<Location> leaves = Lists.newArrayList();
 		// using the general API. Only add the one location to leaves
 		leaves.add(locToLight);
-		List<LightLedsInstruction> instructions = getLightInstructionsForMultipleLocations(facility,
-			defaultLedsToLight,
-			color,
-			leaves);
+		List<LightLedsInstruction> instructions = getLightInstructionsForMultipleLocations(facility, color, leaves);
 		LedInstrListMessage message = new LedInstrListMessage(instructions);
 		sendMessage(facility.getSiteControllerUsers(), message);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Originally set to 4.
+	 * For Walmart palletizer, we want to allow most of a 105 cm light tube
+	 * Note: may need to modify this as the new "function" in aisle file may set to different numbers.
+	 * 
+	 */
+	public static int getMaxLedsToLight(Location inLocation, int inPosNumTotal) {
+		int returnValue = maxNormalLedsToLight;
+		boolean looksLikeFullPalletSituation = (inLocation != null) && inLocation.isSlot()
+				&& (inPosNumTotal < 31 && inPosNumTotal > 25);
+		if (looksLikeFullPalletSituation)
+			returnValue = inPosNumTotal;
+		else {
+			//DEV-1529 adds functions to the aisle file that may directly set LEDs for an aisle or bay. This is likely to be greater than 4.
+			if (inLocation.isBay() || inLocation.isAisle())
+				returnValue = Math.min(inPosNumTotal, maxMaxLedsToLight);
+		}
+
+		return returnValue;
+	}
+
+	/**
+	 * This give the locations desired (configured) span with a sanity check for maximum value.
+	 */
+	private static int getLedNumberForLocation(Location inLocation) {
+		Short firstLocLed = inLocation.getFirstLedNumAlongPath();
+		Short lastLocLed = inLocation.getLastLedNumAlongPath();
+		if (firstLocLed == null || lastLocLed == null)
+			return 0;
+
+		int span = lastLocLed - firstLocLed;
+		if (span < 1)
+			return 0;
+		return getMaxLedsToLight(inLocation, span);
 	}
 
 	/**
@@ -469,13 +511,13 @@ public class LightBehavior implements IApiBehavior {
 	}
 
 	private List<LightLedsInstruction> getLightInstructionsForMultipleLocations(Facility facility,
-		int numLeds,
 		ColorEnum diagnosticColor,
 		List<Location> children) {
 		List<LightLedsInstruction> instructions = Lists.newArrayList();
 		for (Location child : children) {
 			try {
 				if (child.isLightableAisleController()) {
+					int numLeds = getLedNumberForLocation(child);
 					LightLedsInstruction instruction = toLedsInstruction(facility, numLeds, diagnosticColor, child);
 					instructions.add(instruction);
 				} else {
@@ -514,9 +556,7 @@ public class LightBehavior implements IApiBehavior {
 		final ColorEnum inColor,
 		Location inLocation,
 		final LedRange ledRange) {
-		int lightDuration = PropertyBehavior.getPropertyAsInt(facility,
-			FacilityPropertyType.LIGHTSEC,
-			defaultLightDurationSeconds);
+		int lightDuration = PropertyBehavior.getPropertyAsInt(facility, FacilityPropertyType.LIGHTSEC, defaultLightDurationSeconds);
 
 		LedController controller = inLocation.getEffectiveLedController();
 		Short controllerChannel = inLocation.getEffectiveLedChannel();

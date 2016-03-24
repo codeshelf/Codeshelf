@@ -22,8 +22,6 @@ import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.dao.DaoException;
-import com.codeshelf.model.domain.Aisle;
-import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.Facility;
@@ -69,9 +67,6 @@ public class WiFactory {
 			this.displayName = displayName;
 		}
 	}
-
-	// IMPORTANT. This should be synched with LightService.defaultLedsToLight
-	private static final int	maxLedsToLight	= 4;
 
 	/**
 	 * The API to create housekeeping work instruction
@@ -565,22 +560,6 @@ public class WiFactory {
 		return getLedCmdGroupListForItemOrLocation(inItem, inColor, location);
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * Originally set to 4.
-	 * For Walmart palletizer, we want to allow most of a 105 cm light tube
-	 * Note: may need to modify this as the new "function" in aisle file may set to different numbers.
-	 * 
-	 */
-	private static int getMaxLedsToLight(Location inLocation, int inPosNumTotal) {
-		int returnValue = maxLedsToLight;
-		boolean looksLikeFullPalletSituation = (inLocation != null) && inLocation.isSlot()
-				&& (inPosNumTotal < 31 && inPosNumTotal > 25);
-		if (looksLikeFullPalletSituation)
-			returnValue = inPosNumTotal;
-
-		return returnValue;
-	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -592,7 +571,7 @@ public class WiFactory {
 			Short testLed = parent.getFirstLedNumAlongPath();
 			if (testLed != null && testLed > 0) {
 				// For now, a slot will skip over a defined tier. Not sure that is right, but matches initial requirements.
-				if (parent != null && (parent instanceof Bay || parent instanceof Aisle)) {
+				if (parent != null && (parent.isBay() || parent.isAisle())) {
 					return parent;
 				}
 			}
@@ -683,7 +662,7 @@ public class WiFactory {
 		LedCmdGroup ledCmdGroup = new LedCmdGroup(netGuidStr, effectiveLoc.getEffectiveLedChannel(), firstLedPosNum, ledSamples);
 
 		int countUsed = 0;
-		int maxToLight = getMaxLedsToLight(effectiveLoc, lastLedPosNum - firstLedPosNum + 1);
+		int maxToLight = LightBehavior.getMaxLedsToLight(effectiveLoc, lastLedPosNum - firstLedPosNum + 1);
 		for (short ledPos = firstLedPosNum; ledPos <= lastLedPosNum; ledPos++) {
 			LedSample ledSample = new LedSample(ledPos, inColor);
 			ledSamples.add(ledSample);

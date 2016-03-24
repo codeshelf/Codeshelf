@@ -133,18 +133,27 @@ public class LightServiceTest extends ServerTest {
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
 		this.getTenantPersistenceService().commitTransaction();
 
+		LOGGER.info("1: get tier A1.B1.T2");
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Location parent = facility.findSubLocationById("A1.B1.T2");
+		
+		LOGGER.info("2: get child list in working order for A1.B1.T2");
 		List<Location> sublocations = parent.getChildrenInWorkingOrder();
 		
+		LOGGER.info("3: get lighting instructions for A1.B1.T2, which should be the slot lighting");
 		LightLedsInstruction instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
+		Assert.assertNotNull(instructionsForFirstChannel);
 
+		LOGGER.info("4: assert that the slot lighting instructions are coming in same working order");
 		//Messages came in same working order
 		Iterator<Location> subLocationsIter = sublocations.iterator();
 		while (subLocationsIter.hasNext()) {
-			assertASampleWillLightLocation(subLocationsIter.next(), instructionsForFirstChannel);
+			Location nextLoc = subLocationsIter.next();
+			LOGGER.info("4b: checking {}", nextLoc);
+			assertASampleWillLightLocation(nextLoc, instructionsForFirstChannel);
 		}
+		LOGGER.info("5: done");
 
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -163,6 +172,7 @@ public class LightServiceTest extends ServerTest {
 		List<Location> sublocations = parent.getChildrenInWorkingOrder();
 
 		LightLedsInstruction instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
+		Assert.assertNotNull(instructionsForFirstChannel);
 		
 		//Messages came in same working order
 		Iterator<Location> subLocationsIter = sublocations.iterator();
@@ -195,7 +205,9 @@ public class LightServiceTest extends ServerTest {
 		Location parent = facility.findSubLocationById("A1");
 		List<Location> bays = parent.getChildrenInWorkingOrder();
 
+		LOGGER.info ("{} lightable:{} firstLED:{}", parent, parent.isLightableAisleController(), parent.getFirstLedNumAlongPath());
 		LightLedsInstruction instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
+		Assert.assertNotNull(instructionsForFirstChannel);
 
 		for (Location bay : bays) {
 			Tier tier = (Tier) bay.findSubLocationById("T2");
@@ -224,6 +236,7 @@ public class LightServiceTest extends ServerTest {
 		
 		//List<MessageABC> messages = captureLightMessages(facility, parent, 1 /*1 bays x 1 tiers*/);
 		LightLedsInstruction instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
+		Assert.assertNotNull(instructionsForFirstChannel);
 		
 		//@SuppressWarnings("unused")
 		for (Location tier : tiers) {
@@ -252,6 +265,7 @@ public class LightServiceTest extends ServerTest {
 		List<Location> bays = parent.getChildrenInWorkingOrder();
 
 		LightLedsInstruction instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
+		Assert.assertNotNull(instructionsForFirstChannel);
 		
 		for (Location bay : bays) {
 			Tier tier = (Tier) bay.findSubLocationById("T2");
@@ -265,6 +279,11 @@ public class LightServiceTest extends ServerTest {
 		List<MessageABC> messages = captureLightMessages(facility, parent);
 		LedInstrListMessage message = (LedInstrListMessage)messages.get(0);
 		List<LightLedsInstruction> instructionsForAllControllers = message.getInstructions();
+		if (instructionsForAllControllers.isEmpty()){
+			LOGGER.error("Never used to get here. Logging the stack trace; not a throw", new RuntimeException());
+			return null;
+		}
+			
 		return instructionsForAllControllers.get(0);
 	}
 
@@ -278,6 +297,8 @@ public class LightServiceTest extends ServerTest {
 		LightBehavior lightService = new LightBehavior();
 		List<Location> locations = Lists.newArrayList();
 		locations.add(parent);
+		
+		LOGGER.info ("in captureLightMessages. {} lightable:{} firstLED:{}", parent, parent.isLightableAisleController(), parent.getFirstLedNumAlongPath());
 		lightService.lightChildLocations(facility, locations, color);
 		
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
