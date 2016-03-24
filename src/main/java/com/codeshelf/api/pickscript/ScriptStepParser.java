@@ -32,7 +32,7 @@ public class ScriptStepParser {
 		int i;
 		for (i = 0; i < lines.size(); i++) {
 			String line = lines.get(i).trim();
-			if (line.equalsIgnoreCase(SERVER) || line.equalsIgnoreCase(SITE)) {
+			if (line.equalsIgnoreCase(SERVER) || line.toUpperCase().startsWith(SITE)) {
 				break;
 			}
 			if (!(line.isEmpty() || line.startsWith("//"))) {
@@ -47,17 +47,21 @@ public class ScriptStepParser {
 	
 	private static StepPart getNextScriptPart(ArrayList<String> lines) throws Exception{
 		boolean isServer = false, lookingForFirstLine = true;
+		String networkId = null;
 		ArrayList<String> stepLines = Lists.newArrayList();
 		while (!lines.isEmpty()) {
 			String line = lines.get(0).trim();
 			if (lookingForFirstLine) {
-				if (!(line.equalsIgnoreCase(SERVER) || line.equalsIgnoreCase(SITE))) {
+				if (!(line.equalsIgnoreCase(SERVER) || line.toUpperCase().startsWith(SITE))) {
 					throw new Exception("getNextScriptPart() called with script not starting with SERVER/SITE - internal logic error");
 				}
 				isServer = line.equalsIgnoreCase(SERVER);
+				if (!isServer) {
+					networkId = extractNetworkId(line);
+				}
 				lookingForFirstLine = false;
 			} else {
-				if (line.equalsIgnoreCase(SERVER) || line.equalsIgnoreCase(SITE)) {
+				if (line.equalsIgnoreCase(SERVER) || line.toUpperCase().startsWith(SITE)) {
 					//Reached the next script part
 					break;
 				}
@@ -65,18 +69,35 @@ public class ScriptStepParser {
 			}
 			lines.remove(0);
 		}
-		StepPart part = new StepPart(isServer, stepLines); 
+		StepPart part = new StepPart(isServer, networkId, stepLines); 
 		return part;
+	}
+	
+	private static String extractNetworkId(String line) throws Exception{
+		if (!line.toUpperCase().startsWith(SITE)){
+			throw new Exception("extractSiteControllerId() called with line that doesn't start with 'SITE' - internal logic error");
+		}
+		String parts[] = ScriptParser.splitLine(line);
+		if (parts.length == 1) {
+			return null;
+		}
+		if (parts.length == 2) {
+			return parts[1];
+		}
+		throw new Exception("Incorrect number of arguments. Expected 'SITE [networkId]");
 	}
 	
 	public static class StepPart{
 		@Getter
 		private boolean isServer;
 		@Getter
+		private String networkId = null;
+		@Getter
 		private ArrayList<String> scriptLines;
 		
-		public StepPart(boolean isServer, ArrayList<String> scriptLines) {
+		public StepPart(boolean isServer, String networkId, ArrayList<String> scriptLines) {
 			this.isServer = isServer;
+			this.networkId = networkId;
 			this.scriptLines = scriptLines;
 		}
 		

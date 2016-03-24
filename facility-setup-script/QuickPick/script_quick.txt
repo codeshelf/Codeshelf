@@ -19,6 +19,6 @@ scan che X%START
 waitForState che SCAN_SOMETHING DO_PICK
 
 STEP Pick order
-SITE
+SITE DEFAULT
 defChe che :che
 pickAll

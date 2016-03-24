@@ -196,6 +196,15 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		return siteControllers.get(inSiteControllerId);
 	}
 
+	public SiteController getPrimarySiteController(){
+		for (SiteController siteController : siteControllers.values()){
+			if (siteController.getRole() == SiteControllerRole.NETWORK_PRIMARY){
+				return siteController;
+			}
+		}
+		return null;
+	}
+	
 	public void removeSiteController(String inSiteControllerId) {
 		SiteController siteController = this.getSiteController(inSiteControllerId);
 		if (siteController != null) {

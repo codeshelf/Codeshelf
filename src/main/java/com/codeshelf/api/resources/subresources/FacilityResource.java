@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,17 +82,16 @@ import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvWorkerImporter;
 import com.codeshelf.manager.User;
-import com.codeshelf.metrics.SiteControllerHealthCheck;
-import com.codeshelf.metrics.FacilityHealthCheckResult;
 import com.codeshelf.model.DataPurgeParameters;
 import com.codeshelf.model.ReplenishItem;
 import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ResultDisplay;
+import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FacilityMetric;
-import com.codeshelf.model.domain.SiteController.SiteControllerRole;
+import com.codeshelf.model.domain.SiteController;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
@@ -701,30 +701,38 @@ public class FacilityResource {
 		ScriptMessage errorMesage = new ScriptMessage();
 		TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 		
-		//Test if Site Controller is running
-		try {
-			persistence.beginTransaction();
-			facility = facility.reload();
-			FacilityHealthCheckResult result = SiteControllerHealthCheck.checkResult(facility, SiteControllerRole.NETWORK_PRIMARY);
-			if (!result.isHealthy()) {
-				errorMesage.setMessageError("Site controller problem: " + result.getMessage());
-				return errorMesage;
-			}
-		} finally {
-			persistence.rollbackTransaction();
-		}
-		
 		persistence.beginTransaction();
 		try {
+			
 			facility = Facility.staticGetDao().reload(facility);
-			Set<User> users = facility.getSiteControllerUsers();
-			if (users == null || users.isEmpty()) {
-				errorMesage.setMessageError("Could not communicate with site controller. Check Site Controller ID.");
+			String networkId = part.getNetworkId();
+			if (networkId == null) {
+				networkId = CodeshelfNetwork.DEFAULT_NETWORK_NAME;
+			}
+			CodeshelfNetwork network = facility.getNetwork(networkId);
+			if (network == null) {
+				errorMesage.setMessageError("Could not find network " + networkId + " in facility " + facility.getDomainId());
 				return errorMesage;
 			}
+			
+			SiteController siteController = network.getPrimarySiteController();
+			if (siteController == null) {
+				errorMesage.setMessageError("Network " + networkId + " does not have a Primary site controller");
+				return errorMesage;
+			}
+			
+			WebSocketManagerService sessionManager = WebSocketManagerService.getInstance();
+	    	Set<String> connectedUsernames = sessionManager.getConnectedUsernames();	    	
+	    	if (!connectedUsernames.contains(siteController.getDomainId())){
+	    		errorMesage.setMessageError("Site controller " + siteController.getDomainId() + " is not connected");
+	    		return errorMesage;
+	    	}
+
 			//Execute script
 			UUID id = UUID.randomUUID();
 			ScriptMessage scriptMessage = new ScriptMessage(id, part.getScriptLines());
+			Set<User> users = new HashSet<>();
+			users.add(siteController.getUser());
 			webSocketManagerService.sendMessage(users, scriptMessage);
 			persistence.commitTransaction();
 			ScriptMessage siteResponseMessage = ScriptSiteCallPool.waitForSiteResponse(id, timeoutMin);

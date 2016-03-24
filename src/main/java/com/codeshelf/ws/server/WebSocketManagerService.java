@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.websocket.CloseReason;
@@ -468,5 +469,9 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 			.filter(WebSocketConnection::isActive)
 			.filter(WebSocketConnection::isAuthenticated)
 			.map(WebSocketConnection::getCurrentUserContext);
+	}
+	
+	public Set<String> getConnectedUsernames(){
+		return getConnectedUsers().map(UserContext::getUsername).collect(Collectors.toSet());
 	}
 }
