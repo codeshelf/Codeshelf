@@ -23,6 +23,7 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
@@ -33,6 +34,7 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 
@@ -1396,5 +1398,59 @@ public class CheProcessScanPick extends ServerTest {
 
 		picker.logout();
 	}
+	
+	@Test
+	public void testAutoSetupAutoPick() throws IOException{
+		beginTransaction();
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.PICKMULT, Boolean.toString(true));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.turnOffHK(facility);
+		Che che1 = getChe1();
+		che1.setCheLighting(CheLightingEnum.LABEL_V1);
+		Che.staticGetDao().store(che1);
+		commitTransaction();
 
+		beginTransaction();
+		setUpOrdersWithCntrAndSequence(facility);
+		commitTransaction();
+
+		this.startSiteController(); // after all the parameter changes
+
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
+		picker.loginAndSetup("Picker #1");
+
+		LOGGER.info("1: setup two orders on the cart.");
+		picker.scanOrderId("12345");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
+		picker.scanPosition("999");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.scanOrderId("11111");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
+		picker.scanPosition("999");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		verifyCheDisplay(picker, "2 orders", "8 jobs", "", "START (or SETUP)");
+
+		LOGGER.info("2: pick two items using P%999 instead of a position scan.");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		verifyCheDisplay(picker, "D601", "1522", "At 2 - QTY 4", "");
+		picker.scanPosition("999");
+		picker.waitInSameState(CheStateEnum.DO_PICK, 2000);
+		verifyCheDisplay(picker, "D601", "1522", "At 1 - QTY 3", "");
+		picker.scanPosition("999");
+		
+		LOGGER.info("3: pick six remaining items normally.");
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		
+		LOGGER.info("4: verify that all 8 items were picked.");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		verifyCheDisplay(picker, "2 orders", "0 jobs", "8 done", "SETUP");
+	}
 }

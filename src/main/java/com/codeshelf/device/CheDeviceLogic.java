@@ -165,6 +165,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	// If used to check if the user wants to skip SCANPICK UPC/SKU/LCN verification
 	protected static final String					SCAN_SKIP								= "SCANSKIP";
 	protected static final String					SKIP_SCAN								= "SKIPSCAN";
+	
+	protected static final String					POSITION_AUTO							= "999";
 
 	protected static final Integer					maxCountForPositionControllerDisplay	= 99;
 

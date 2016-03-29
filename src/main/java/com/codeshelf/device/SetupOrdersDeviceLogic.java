@@ -2121,29 +2121,37 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	private void processPosconScanToPick(String inScanPrefixStr, String inContent) {
 		try {
+			if (inContent.equals(POSITION_AUTO)){
+				inContent = getActivePoscon();
+			}
 			byte position = Byte.parseByte(inContent);
 			//Try to retrieve the displayed value to allow for shorts
 			Integer value = null;
-			if (getCheLightingEnum() == CheLightingEnum.LABEL_V1) {
-				//If the CHE is in LABEL light mode, Poscons will be blank, so read planed quantity from the WI
-				String containerId = mPositionToContainerMap.get(inContent);
-				WorkInstruction wi = getWorkInstructionForContainerId(containerId);
-				if (wi == null) {
-					LOGGER.warn("Ignoring {}{} scan, as could not retrieve the work instruction at that position",
-						inScanPrefixStr,
-						inContent);
-					return;
-				}
-				value = wi.getPlanQuantity();
-			} else {
-				Byte displayedValue = getLastSentPositionControllerDisplayValue(position);
-				value = displayedValue == null ? null : displayedValue.intValue();
+			//If the CHE is in LABEL light mode, Poscons will be blank, so read planed quantity from the WI
+			String containerId = mPositionToContainerMap.get(inContent);
+			WorkInstruction wi = getWorkInstructionForContainerId(containerId);
+			if (wi == null) {
+				LOGGER.warn("Ignoring {}{} scan, as could not retrieve the work instruction at that position",
+					inScanPrefixStr,
+					inContent);
+				return;
 			}
+			value = wi.getPlanQuantity();
 			//Simulate button press
 			processButtonPress((int) position, value);
 		} catch (NumberFormatException e) {
 			LOGGER.error("Ignoring {}{} scan as could not parse it as byte", inScanPrefixStr, inContent);
 		}
+	}
+	
+	private String getActivePoscon(){
+		WorkInstruction activeWi = getOneActiveWorkInstruction();
+		if (activeWi == null) {
+			LOGGER.warn("Could not find active WI");
+			return null;
+		}
+		byte positionId = getPosconIndexOfContainerId(activeWi.getContainerId());
+		return positionId + "";
 	}
 
 	/**
@@ -2597,6 +2605,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				return;
 			}
 
+			if (inScanStr.equalsIgnoreCase(POSITION_AUTO)) {
+				inScanStr = getNextAvailablePosition();
+			}
+			
 			if (mPositionToContainerMap.get(inScanStr) == null) {
 				mPositionToContainerMap.put(inScanStr, mContainerInSetup);
 				mLastAssignedPoscon = inScanStr;
@@ -2615,6 +2627,21 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		} else {
 			setState(CheStateEnum.CONTAINER_POSITION_INVALID);
 		}
+	}
+	
+	private String getNextAvailablePosition(){
+		int maxUsedPosition = 0, position;
+		for (String positionStr : mPositionToContainerMap.keySet()) {
+			try {
+				position = Integer.parseInt(positionStr);
+				if (position > maxUsedPosition) {
+					maxUsedPosition = position;
+				}
+			} catch (NumberFormatException e) {
+				LOGGER.warn("Unexpected error pasting position id {}", positionStr);
+			}
+		}
+		return (maxUsedPosition + 1) + "";
 	}
 
 	// --------------------------------------------------------------------------

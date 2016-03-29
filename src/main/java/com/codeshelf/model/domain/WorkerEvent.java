@@ -242,5 +242,5 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 		 replenItem.setUom(this.getItemUom());
 		 replenItem.setLocation(this.getLocation());
 		 return replenItem;		
-		}
+	}
 }
