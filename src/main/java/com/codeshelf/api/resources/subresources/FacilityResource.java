@@ -703,6 +703,7 @@ public class FacilityResource {
 		//Test if Site Controller is running
 		try {
 			persistence.beginTransaction();
+			facility = facility.reload();
 			FacilityHealthCheckResult result = new ActiveSiteControllerHealthCheck(webSocketManagerService).checkResult(facility);
 			if (!result.isHealthy()) {
 				errorMesage.setMessageError("Site controller problem: " + result.getMessage());
