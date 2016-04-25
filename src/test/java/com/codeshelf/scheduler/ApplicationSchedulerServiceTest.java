@@ -132,8 +132,10 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 		if (service.isPresent()) {
 			Map<ScheduledJobType, CronExpression> jobs = service.get().getJobs();
 			Assert.assertEquals(updatedExpression, jobs.get(ScheduledJobType.Test).getCronExpression());
+			Assert.assertFalse(service.get().isPaused(ScheduledJobType.Test));
 		}
 		commitTransaction();
+
 
 		/*
 		for (final Entry<Tenant, Facility> entry : tenantFacilities.entries()) {
