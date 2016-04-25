@@ -23,6 +23,7 @@ import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
+import org.quartz.Trigger.TriggerState;
 import org.quartz.TriggerBuilder;
 import org.quartz.UnableToInterruptJobException;
 import org.quartz.impl.matchers.GroupMatcher;
@@ -298,6 +299,15 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 	
 	private String getLoggingContext() {
 		return tenant.toString() + "/" + facility.toString();
+	}
+
+	public boolean isPaused(ScheduledJobType type) throws SchedulerException {
+		boolean paused = false;
+		List<? extends Trigger> triggers = scheduler.getTriggersOfJob(type.getKey());
+		for (Trigger trigger : triggers) {
+			paused |= scheduler.getTriggerState(trigger.getKey()).equals(TriggerState.PAUSED);
+		}
+		return paused;
 	}
 
 }

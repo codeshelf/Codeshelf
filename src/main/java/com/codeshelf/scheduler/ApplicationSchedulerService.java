@@ -206,7 +206,7 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 		//Always schedule the job with the scheduler, but begin paused if inactive
 		ScheduledJobType type = job.getType();
 		service.schedule(job.getCronExpression(), type);
-		if (!job.isActive()) {
+		if (job.isActive()) {
 			service.resumeJob(type); //make sure resumed if the state has changed
 			//to prevent "catch up execution" when resuming, the scheduler jobstore has low misfire threshold 
 			// and trigger is set to not act when misfired
