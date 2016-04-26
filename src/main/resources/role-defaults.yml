@@ -46,6 +46,7 @@ View:
   - "workinstruction:view"
   - "event:view"
   - "worker:view"
+  - "che:view"
 Supervise:
   - "event:*"
   - "worker:*"
